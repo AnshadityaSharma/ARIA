@@ -76,9 +76,13 @@ class WindowState:
     handle: int | None = None
     title: str | None = None
     geometry: Rect | None = None
+    previous_geometry: Rect | None = None
+    last_action: ActionType | None = None
 
-    def update(self, handle: int, title: str, geometry: Rect) -> None:
+    def update(self, handle: int, title: str, geometry: Rect, action: ActionType | None = None) -> None:
+        if self.handle == handle and self.geometry != geometry: self.previous_geometry = self.geometry
         self.handle, self.title, self.geometry = handle, title, geometry
+        if action is not None: self.last_action = action
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,4 +90,3 @@ class Result:
     ok: bool
     message: str
     data: dict[str, Any] = field(default_factory=dict)
-

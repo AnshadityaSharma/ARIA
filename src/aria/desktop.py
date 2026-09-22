@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+from difflib import get_close_matches
 from pathlib import Path
 from uuid import UUID
 
@@ -37,8 +38,11 @@ class Applications:
         exact = apps.get(key)
         if exact is None:
             hits = [(title, appid) for title, appid in apps.items() if key in title]
-            if len(hits) != 1: raise LookupError(f"Application {name!r} not found or is ambiguous")
-            exact = hits[0][1]
+            if len(hits) == 1: exact = hits[0][1]
+            elif close := get_close_matches(key, apps, n=2, cutoff=.78):
+                if len(close) > 1 and abs(len(close[0])-len(close[1])) < 2: raise LookupError(f"Application {name!r} is ambiguous")
+                exact = apps[close[0]]
+            else: raise LookupError(f"Application {name!r} not found or is ambiguous")
         os.startfile(f"shell:AppsFolder\\{exact}")
 
 

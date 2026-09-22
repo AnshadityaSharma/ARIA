@@ -56,3 +56,15 @@ def test_minimal_state_tracks_each_successful_operation():
     engine.run_text("move it to the right")
     assert engine.state.geometry == Rect(150, 100, 900, 720)
 
+
+def test_extended_sequential_references_and_history():
+    windows=FakeWindows(); engine=Engine(windows=windows,applications=FakeApps())
+    engine.execute(Action(T.OPEN_APPLICATION,"demo")); engine.run_text("make it 20% smaller")
+    assert engine.state.previous_geometry == Rect(100,100,1000,800)
+    engine.run_text("move that 100 pixels left"); assert engine.state.geometry == Rect(0,100,800,640)
+    engine.run_text("make this window half the size"); assert engine.state.geometry == Rect(0,100,400,320)
+
+
+def test_missing_tracked_window_does_not_silently_change_target():
+    windows=FakeWindows(); windows.exists=lambda _handle: False
+    with pytest.raises(LookupError,match="tracked window"): Engine(windows=windows).run_text("make it smaller")

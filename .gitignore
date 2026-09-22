@@ -10,4 +10,4 @@ build/
 logs/
 screenshots/
 .aria.toml
-
+benchmark-*.wav

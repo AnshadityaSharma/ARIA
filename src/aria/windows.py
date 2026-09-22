@@ -93,15 +93,15 @@ class WindowManager:
         return self.find(title)
 
 
-def target_rect(current: Rect, work: Rect, *, scale: float | None = None, ratio: float | None = None, position: str | None = None) -> Rect:
+def target_rect(current: Rect, work: Rect, *, scale: float | None = None, ratio: float | None = None, position: str | None = None, pixels: int = 50) -> Rect:
     width = max(160, round(work.width * ratio)) if ratio else max(160, round(current.width * (scale or 1)))
     height = max(120, round(work.height * ratio)) if ratio else max(120, round(current.height * (scale or 1)))
     x, y = current.x, current.y
-    step = 50
+    step = pixels
     positions = {
         "top_left": (work.x, work.y), "top_right": (work.x+work.width-width, work.y),
         "bottom_left": (work.x, work.y+work.height-height), "bottom_right": (work.x+work.width-width, work.y+work.height-height),
-        "center": (work.x+(work.width-width)//2, work.y+(work.height-height)//2),
+        "center": (work.x+(work.width-width)//2, work.y+(work.height-height)//2), "top": (current.x, work.y), "bottom": (current.x, work.y+work.height-height),
         "right": (min(current.x+step, work.x+work.width-width), current.y), "left": (max(current.x-step, work.x), current.y),
         "up": (current.x, max(current.y-step, work.y)), "down": (current.x, min(current.y+step, work.y+work.height-height)),
     }

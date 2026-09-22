@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Local-first deterministic Windows automation"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = ["pillow>=11.0", "pycaw>=20240210", "send2trash>=1.8"]
+dependencies = ["pillow>=11.0", "pycaw>=20240210", "send2trash>=1.8", "faster-whisper>=1.2", "sounddevice>=0.5", "numpy>=2.0", "psutil>=7.0"]
 
 [project.scripts]
 aria = "aria.main:main"
@@ -23,4 +23,3 @@ packages = ["src/aria"]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 markers = ["windows_integration: changes a real disposable Windows window"]
-

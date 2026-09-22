@@ -24,14 +24,20 @@ def parse(text: str) -> Action:
     for verb, kind in (("minimize", ActionType.MINIMIZE_WINDOW), ("maximize", ActionType.MAXIMIZE_WINDOW), ("restore", ActionType.RESTORE_WINDOW)):
         if m := re.fullmatch(fr"{verb}(?: (.+))?", raw):
             return Action(kind, m.group(1) or "tracked")
-    if m := re.fullmatch(r"make (?:it|this window) (10% |a little )?(smaller|bigger)", raw):
-        return Action(ActionType.RESIZE_WINDOW, "tracked", {"scale": .9 if m.group(2) == "smaller" else 1.1}).validate()
-    if m := re.fullmatch(r"make (?:it|this window) (?:one[- ]fifth|20%)(?: of the screen)?", raw):
-        return Action(ActionType.RESIZE_WINDOW, "tracked", {"screen_ratio": .2}).validate()
+    ref = r"(it|that|this window)"
+    if m := re.fullmatch(fr"make {ref} (?:(\d+)% |a little |slightly )?(smaller|bigger)", raw):
+        amount = int(m.group(2) or 10) / 100
+        return Action(ActionType.RESIZE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", {"scale": 1-amount if m.group(3) == "smaller" else 1+amount}).validate()
+    if m := re.fullmatch(fr"make {ref} (?:one[- ]fifth|20%)(?: of the screen)?", raw):
+        return Action(ActionType.RESIZE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", {"screen_ratio": .2}).validate()
+    if m := re.fullmatch(fr"make {ref} half (?:the |its )?size", raw):
+        return Action(ActionType.RESIZE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", {"scale": .5}).validate()
     if m := re.fullmatch(r"resize (.+?) (\d+)%", raw):
         return Action(ActionType.RESIZE_WINDOW, m.group(1), {"screen_ratio": int(m.group(2)) / 100}).validate()
-    if m := re.fullmatch(r"move (?:it|this window)(?: to the)? (top right|top left|bottom right|bottom left|center|right|left|up|down)", raw):
-        return Action(ActionType.MOVE_WINDOW, "tracked", {"position": m.group(1).replace(" ", "_")})
+    if m := re.fullmatch(fr"move {ref}(?: (\d+) pixels?)?(?: slightly)?(?: to the)? (top right|top left|bottom right|bottom left|top|bottom|center|right|left|up|down)", raw):
+        params = {"position": m.group(3).replace(" ", "_")}
+        if m.group(2): params["pixels"] = int(m.group(2))
+        return Action(ActionType.MOVE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", params)
     if m := re.fullmatch(r"move (.+?)(?: to)? (top right|top left|bottom right|bottom left|center)", raw):
         return Action(ActionType.MOVE_WINDOW, m.group(1), {"position": m.group(2).replace(" ", "_")})
     if m := re.fullmatch(r"create folder (?:called )?(.+?)(?: (?:in|on) (desktop|documents|downloads|videos|pictures))?", raw):

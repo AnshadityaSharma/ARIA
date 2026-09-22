@@ -11,7 +11,6 @@ uv sync --dev
 uv run aria
 ```
 
-Type `help` in the interactive prompt. Run tests with `uv run pytest`.
+Type `help` in the interactive prompt. Start local push-to-talk mode with `uv run aria --voice`; press Enter, speak a short command, then pause. The multilingual model is downloaded once and all transcription then runs locally. Run tests with `uv run pytest`.
 
 Architecture and scope are documented in `context.md` and `docs/architecture.md`.
-

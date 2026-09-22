@@ -24,13 +24,15 @@ class Engine:
         return result
 
     def _handle(self, target: str | None) -> int:
-        if target in {None, "tracked", "it", "this window"}:
+        if target == "foreground" or target is None: return self.windows.active()
+        if target in {"tracked", "it", "that"}:
             if self.windows.exists(self.state.handle): return self.state.handle
-            return self.windows.active()
+            self.state = WindowState()
+            raise LookupError("The tracked window is unavailable; name a window or say 'this window'")
         return self.windows.find(target)
 
-    def _track(self, handle: int) -> Rect:
-        rect = self.windows.rect(handle); self.state.update(handle, self.windows.title(handle), rect); return rect
+    def _track(self, handle: int, action: T | None = None) -> Rect:
+        rect = self.windows.rect(handle); self.state.update(handle, self.windows.title(handle), rect, action); return rect
 
     def execute(self, action: Action, *, confirmed: bool = False) -> Result:
         action.validate(); risk = RISK[action.kind]
@@ -39,7 +41,7 @@ class Engine:
         k = action.kind
         if k == T.OPEN_APPLICATION:
             before = {w.handle for w in self.windows.windows()}; self.applications.launch(action.target)
-            handle = self.windows.wait_for(action.target, before); self._track(handle)
+            handle = self.windows.wait_for(action.target, before); self._track(handle, k)
             return Result(True, f"Opened {action.target}", {"handle": handle})
         if k in {T.FOCUS_WINDOW, T.MINIMIZE_WINDOW, T.MAXIMIZE_WINDOW, T.RESTORE_WINDOW, T.RESIZE_WINDOW, T.MOVE_WINDOW}:
             handle = self._handle(action.target)
@@ -47,9 +49,9 @@ class Engine:
             elif k in {T.MINIMIZE_WINDOW, T.MAXIMIZE_WINDOW, T.RESTORE_WINDOW}: self.windows.show(handle, k.value.split("_")[0].lower())
             else:
                 current = self.windows.rect(handle); work = self.windows.work_area(handle)
-                rect = target_rect(current, work, scale=action.params.get("scale"), ratio=action.params.get("screen_ratio"), position=action.params.get("position"))
+                rect = target_rect(current, work, scale=action.params.get("scale"), ratio=action.params.get("screen_ratio"), position=action.params.get("position"), pixels=action.params.get("pixels", 50))
                 self.windows.place(handle, rect)
-            geometry = self._track(handle)
+            geometry = self._track(handle, k)
             return Result(True, f"Completed {k}", {"geometry": geometry})
         if k == T.CREATE_FOLDER:
             path = self.files.create_folder(action.target, action.params["name"]); return Result(True, f"Created {path}")

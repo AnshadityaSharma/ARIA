@@ -12,3 +12,4 @@
 - `take screenshot`
 - `set volume 50%`, `increase volume by 10%`, `mute`, `unmute`
 
+Start push-to-talk voice mode with `aria --voice`. Press Enter, speak one short command, and pause. The multilingual `base` model stays loaded between commands; use `--model tiny` on slower hardware.
