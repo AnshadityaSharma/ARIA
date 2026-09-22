@@ -1,4 +1,4 @@
-# Sprint 1 text commands
+# ARIA commands
 
 - `open <dynamically discovered application>`
 - `make it one-fifth of the screen`
@@ -12,4 +12,18 @@
 - `take screenshot`
 - `set volume 50%`, `increase volume by 10%`, `mute`, `unmute`
 
-Start push-to-talk voice mode with `aria --voice`. Press Enter, speak one short command, and pause. The multilingual `base` model stays loaded between commands; use `--model tiny` on slower hardware.
+Start Enter-to-speak mode with `aria --voice`, or global Ctrl+Space activation
+with `aria --desktop`. The cached multilingual `base` model stays loaded.
+
+Sprint 3 file and system commands:
+
+- `delete "C:\\path\\test_file.txt"` — confirmation; Recycle Bin.
+- `move file "C:\\source.txt" to "C:\\destination.txt"` — confirmation.
+- `rename file "C:\\source.txt" to "new-name.txt"` — confirmation.
+- `copy file "C:\\source.txt" to "C:\\destination.txt"` — low risk; no overwrite.
+- `shutdown` / `shut down computer` — confirmation.
+
+Relative paths resolve against ARIA's launch directory; the dialog shows absolute paths.
+Configure `--confirmation-timeout 45` or `--confirm-low` as needed.
+Confirmation dialogs are available in desktop mode; legacy CLI modes reject risky
+actions without executing them. Spoken filenames remain subject to ASR accuracy.

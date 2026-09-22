@@ -58,11 +58,18 @@ class Files:
         os.startfile(path); return path
     def copy(self, source: str, destination: str) -> Path:
         src, dst = self.resolve(source), self.resolve(destination)
-        return Path(shutil.copytree(src, dst) if src.is_dir() else shutil.copy2(src, dst))
+        if dst.exists(): raise FileExistsError(dst)
+        if src.is_dir(): return Path(shutil.copytree(src, dst))
+        with src.open("rb") as reader, dst.open("xb") as writer:
+            shutil.copyfileobj(reader, writer)
+        return dst
     def move(self, source: str, destination: str) -> Path:
+        if self.resolve(destination).exists(): raise FileExistsError(destination)
         return Path(shutil.move(self.resolve(source), self.resolve(destination)))
     def rename(self, source: str, name: str) -> Path:
-        src = self.resolve(source); return src.rename(src.with_name(name))
+        src = self.resolve(source)
+        if src.with_name(name).exists(): raise FileExistsError(name)
+        return src.rename(src.with_name(name))
     def delete(self, value: str) -> None:
         from send2trash import send2trash
         send2trash(str(self.resolve(value)))
@@ -72,7 +79,9 @@ def screenshot(destination: str | None = None) -> Path:
     from datetime import datetime
     from PIL import ImageGrab
     path = Path(destination) if destination else known_folder("pictures") / f"ARIA-{datetime.now():%Y%m%d-%H%M%S}.png"
-    ImageGrab.grab(all_screens=True).save(path); return path
+    with path.open("xb") as destination_file:
+        ImageGrab.grab(all_screens=True).save(destination_file, format="PNG")
+    return path
 
 
 class Volume:
@@ -84,3 +93,9 @@ class Volume:
     def change(self, delta: int) -> int:
         return self.set(round(self._endpoint().GetMasterVolumeLevelScalar()*100) + delta)
     def mute(self, value: bool) -> None: self._endpoint().SetMute(value, None)
+
+
+def shutdown_computer():
+    # Fixed system capability: never accepts arbitrary shell arguments.
+    executable = Path(os.environ["SystemRoot"]) / "System32" / "shutdown.exe"
+    subprocess.run([str(executable), "/s", "/t", "0"], check=True, timeout=10)

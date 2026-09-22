@@ -1,4 +1,19 @@
 # Security boundary
 
-Every action has deterministic risk metadata. Medium/high-risk operations require an explicit `confirmed=True` call and are not exposed by the Sprint 1 text parser. Deletion uses the Recycle Bin. ARIA does not inspect file content and sends no data to a network service.
+Every action has explicit deterministic risk metadata. Unknown actions/fields and
+malformed parameters are denied. NONE/LOW are allowed by default; MEDIUM/HIGH require
+confirmation. `--confirm-low` optionally includes LOW.
 
+The old `confirmed=True` bypass is removed. Confirmations bind an immutable validated
+action to resolved absolute paths. Tokens are scoped to one engine, single-use, and
+expire after a configurable 30 seconds. Cancel, timeout, duplicate clicks, and stale
+requests execute nothing. Changed file identity/size/modification time requires a
+fresh request. Existing destinations are refused. Delete uses the Recycle Bin.
+
+The trusted UI/controller invokes approval; parsers only produce actions. Arbitrary
+Python running in the same process already has OS privileges and is outside this
+boundary. File rechecks are not transactional locks against concurrent external edits.
+
+Audio stays in memory; there is no idle microphone loop. Interactive ASR uses cached
+local weights only. Weight provisioning is an explicit setup download, not remote
+inference. Local diagnostics contain action metadata, file paths, timings, and errors.

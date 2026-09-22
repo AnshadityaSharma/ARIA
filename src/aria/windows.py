@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ctypes
-import os
 import time
 from ctypes import wintypes
 from dataclasses import dataclass
@@ -10,6 +9,20 @@ from aria.core import Rect
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+user32.GetForegroundWindow.restype = wintypes.HWND
+user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+user32.MonitorFromWindow.restype = wintypes.HMONITOR
+user32.GetMonitorInfoW.argtypes = [wintypes.HMONITOR, ctypes.c_void_p]
+user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+user32.IsWindow.argtypes = [wintypes.HWND]
+user32.IsWindowVisible.argtypes = [wintypes.HWND]
+user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT]
+user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+user32.SetForegroundWindow.argtypes = [wintypes.HWND]
+user32.IsHungAppWindow.argtypes = [wintypes.HWND]
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,7 +61,10 @@ class WindowManager:
             if user32.IsWindowVisible(handle) and (title := self.title(handle)):
                 pid = wintypes.DWORD()
                 user32.GetWindowThreadProcessId(handle, ctypes.byref(pid))
-                found.append(Window(handle, title, self.rect(handle), pid.value))
+                try:
+                    found.append(Window(handle, title, self.rect(handle), pid.value))
+                except OSError:
+                    pass  # Window disappeared during enumeration.
             return True
         callback = callback_type(visit)
         user32.EnumWindows(callback, 0)
@@ -77,18 +93,35 @@ class WindowManager:
         user32.ShowWindow(handle, {"minimize": 6, "maximize": 3, "restore": 9}[mode])
 
     def place(self, handle: int, rect: Rect) -> Rect:
-        if not user32.SetWindowPos(handle, 0, rect.x, rect.y, rect.width, rect.height, 0x0014):
+        # Let the target apply its own sizing rules. Modern apps can return
+        # contradictory WM_GETMINMAXINFO limits during a layout transition.
+        # Read back the committed rectangle and report constraints to the caller.
+        if not user32.SetWindowPos(handle, 0, rect.x, rect.y, rect.width, rect.height, 0x4014):
             raise OSError(ctypes.get_last_error(), "SetWindowPos failed")
-        actual = self.rect(handle)
-        if abs(actual.x-rect.x) > 2 or abs(actual.width-rect.width) > 2:
-            raise OSError("Window did not reach the requested geometry")
-        return actual
+        deadline = time.monotonic() + 1
+        previous = None
+        stable_since = time.monotonic()
+        while time.monotonic() < deadline:
+            actual = self.rect(handle)
+            if actual.width <= 0 or actual.height <= 0:
+                raise OSError("Window returned invalid geometry after the operation")
+            if actual == rect:
+                return actual
+            if actual != previous:
+                previous, stable_since = actual, time.monotonic()
+            elif time.monotonic() - stable_since >= .2:
+                if user32.IsHungAppWindow(handle):
+                    raise OSError("Target window is not responding")
+                return actual
+            time.sleep(.01)
+        raise OSError("Timed out verifying window geometry")
 
     def wait_for(self, title: str, existing: set[int], timeout: float = 8) -> int:
         end = time.monotonic() + timeout
         while time.monotonic() < end:
-            candidates = [w for w in self.windows() if w.handle not in existing and title.casefold() in w.title.casefold()]
-            if candidates: return candidates[0].handle
+            candidates = [w for w in self.windows() if title.casefold() in w.title.casefold()]
+            if candidates:
+                return next((w.handle for w in candidates if w.handle not in existing), candidates[0].handle)
             time.sleep(.1)
         return self.find(title)
 

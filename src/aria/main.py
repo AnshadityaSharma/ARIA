@@ -10,10 +10,23 @@ HELP = "Commands: open <app>, make it one-fifth of the screen, make it smaller/b
 
 
 def main() -> int:
-    options=argparse.ArgumentParser(); options.add_argument("--voice",action="store_true"); options.add_argument("--model",default="base"); args=options.parse_args()
+    options=argparse.ArgumentParser()
+    mode=options.add_mutually_exclusive_group()
+    mode.add_argument("--voice",action="store_true")
+    mode.add_argument("--desktop",action="store_true")
+    options.add_argument("--model",default="base")
+    options.add_argument("--confirmation-timeout",type=float,default=30)
+    options.add_argument("--confirm-low",action="store_true")
+    args=options.parse_args()
     Path("logs").mkdir(exist_ok=True)
     logging.basicConfig(filename="logs/aria.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    engine = Engine()
+    from aria.permissions import PermissionEngine
+    policy = PermissionEngine(args.confirmation_timeout, args.confirm_low)
+    if args.desktop:
+        from aria.ui import DesktopApp
+        DesktopApp(args.model, args.confirmation_timeout, args.confirm_low).run()
+        return 0
+    engine = Engine(permissions=policy)
     if args.voice:
         from aria.voice import LocalASR, VoiceController, VoiceError
         voice=VoiceController(engine,asr=LocalASR(args.model)); print("ARIA local voice mode. Press Enter to speak; Ctrl+C to quit.")

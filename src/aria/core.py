@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
+from types import MappingProxyType
+from collections.abc import Mapping
+import math
 
 
 class ActionType(StrEnum):
@@ -24,6 +27,7 @@ class ActionType(StrEnum):
     CHANGE_VOLUME = "CHANGE_VOLUME"
     MUTE = "MUTE"
     UNMUTE = "UNMUTE"
+    SHUTDOWN = "SHUTDOWN"
 
 
 class Risk(StrEnum):
@@ -33,13 +37,27 @@ class Risk(StrEnum):
     HIGH = "HIGH"
 
 
-RISK = {kind: Risk.NONE for kind in ActionType} | {
+RISK = MappingProxyType({
+    ActionType.OPEN_APPLICATION: Risk.NONE,
+    ActionType.FOCUS_WINDOW: Risk.NONE,
+    ActionType.MINIMIZE_WINDOW: Risk.NONE,
+    ActionType.MAXIMIZE_WINDOW: Risk.NONE,
+    ActionType.RESTORE_WINDOW: Risk.NONE,
+    ActionType.RESIZE_WINDOW: Risk.NONE,
+    ActionType.MOVE_WINDOW: Risk.NONE,
+    ActionType.OPEN_PATH: Risk.NONE,
+    ActionType.SET_VOLUME: Risk.NONE,
+    ActionType.CHANGE_VOLUME: Risk.NONE,
+    ActionType.MUTE: Risk.NONE,
+    ActionType.UNMUTE: Risk.NONE,
+    ActionType.CREATE_FOLDER: Risk.LOW,
     ActionType.TAKE_SCREENSHOT: Risk.LOW,
     ActionType.COPY_PATH: Risk.LOW,
     ActionType.MOVE_PATH: Risk.MEDIUM,
     ActionType.RENAME_PATH: Risk.MEDIUM,
     ActionType.DELETE_PATH: Risk.HIGH,
-}
+    ActionType.SHUTDOWN: Risk.HIGH,
+})
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,12 +72,53 @@ class Rect:
 class Action:
     kind: ActionType
     target: str | None = None
-    params: dict[str, Any] = field(default_factory=dict)
+    params: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if not isinstance(self.params, Mapping):
+            raise ValueError("Action parameters must be a mapping")
+        object.__setattr__(self, "params", MappingProxyType(dict(self.params)))
 
     def validate(self) -> Action:
+        if not isinstance(self.kind, ActionType):
+            raise ValueError("Unsupported action")
+        if self.target is not None and (not isinstance(self.target, str) or not self.target.strip() or any(ord(c) < 32 for c in self.target)):
+            raise ValueError("Invalid action target")
+        required = {ActionType.OPEN_APPLICATION, ActionType.CREATE_FOLDER, ActionType.OPEN_PATH,
+                    ActionType.COPY_PATH, ActionType.MOVE_PATH, ActionType.RENAME_PATH, ActionType.DELETE_PATH}
+        if self.kind in required and not self.target:
+            raise ValueError("Action requires a target")
+        fields = {
+            ActionType.RESIZE_WINDOW: {"scale", "screen_ratio"}, ActionType.MOVE_WINDOW: {"position", "pixels"},
+            ActionType.CREATE_FOLDER: {"name"}, ActionType.COPY_PATH: {"destination"},
+            ActionType.MOVE_PATH: {"destination"}, ActionType.RENAME_PATH: {"destination"},
+            ActionType.SET_VOLUME: {"level"}, ActionType.CHANGE_VOLUME: {"delta"},
+        }
+        if set(self.params) - fields.get(self.kind, set()):
+            raise ValueError("Unexpected action parameters")
+        if any(type(v) not in (str, int, float) for v in self.params.values()):
+            raise ValueError("Action parameters must be scalar values")
+        for key in ("destination", "name"):
+            if key in fields.get(self.kind, set()):
+                value = self.params.get(key)
+                if not isinstance(value, str) or not value.strip() or any(ord(c) < 32 for c in value):
+                    raise ValueError(f"Missing or invalid {key}")
+        if self.kind == ActionType.SHUTDOWN and self.target is not None:
+            raise ValueError("Shutdown does not accept a target")
+        for key, low, high in (("level", 0, 100), ("delta", -100, 100)):
+            if key in fields.get(self.kind, set()):
+                if type(self.params.get(key)) is not int or not low <= self.params[key] <= high:
+                    raise ValueError(f"{key} must be an integer between {low} and {high}")
+        if self.kind == ActionType.MOVE_WINDOW:
+            if self.params.get("position") not in {"top_left", "top_right", "bottom_left", "bottom_right", "center", "top", "bottom", "left", "right", "up", "down"}:
+                raise ValueError("Invalid window position")
+            if "pixels" in self.params and (type(self.params["pixels"]) is not int or not 1 <= self.params["pixels"] <= 10000):
+                raise ValueError("Invalid movement distance")
         if self.kind == ActionType.OPEN_APPLICATION and not self.target:
             raise ValueError("Application name is required")
         if self.kind == ActionType.RESIZE_WINDOW:
+            if len(self.params) != 1 or any(type(v) not in (int, float) or not math.isfinite(v) for v in self.params.values()):
+                raise ValueError("Resize requires exactly one finite numeric ratio")
             scale = self.params.get("scale")
             ratio = self.params.get("screen_ratio")
             if scale is None and ratio is None:
@@ -80,6 +139,7 @@ class WindowState:
     last_action: ActionType | None = None
 
     def update(self, handle: int, title: str, geometry: Rect, action: ActionType | None = None) -> None:
+        if self.handle != handle: self.previous_geometry = None
         if self.handle == handle and self.geometry != geometry: self.previous_geometry = self.geometry
         self.handle, self.title, self.geometry = handle, title, geometry
         if action is not None: self.last_action = action

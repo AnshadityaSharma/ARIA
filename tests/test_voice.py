@@ -27,3 +27,8 @@ def test_low_confidence_never_executes():
     engine=Engine(); voice=VoiceController(engine,Mic(),ASR(.1))
     with pytest.raises(LowConfidence): voice.run_once()
     assert engine.actions==[]
+
+
+def test_incomplete_timeline_omits_unmeasured_intervals():
+    timeline = Timeline(microphone_start=1, asr_start=2)
+    assert timeline.milliseconds() == {"capture": 1000}

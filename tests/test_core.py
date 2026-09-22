@@ -68,3 +68,17 @@ def test_extended_sequential_references_and_history():
 def test_missing_tracked_window_does_not_silently_change_target():
     windows=FakeWindows(); windows.exists=lambda _handle: False
     with pytest.raises(LookupError,match="tracked window"): Engine(windows=windows).run_text("make it smaller")
+
+
+def test_application_constrained_geometry_is_tracked_and_reported():
+    windows=FakeWindows()
+    def constrained_place(handle, requested):
+        windows.value=Rect(requested.x, requested.y, 800, 600)
+        return windows.value
+    windows.place=constrained_place
+    engine=Engine(windows=windows, applications=FakeApps())
+    engine.run_text("open demo")
+    result=engine.run_text("make it one fifth of the screen")
+    assert result.data["constrained"]
+    assert engine.state.geometry == Rect(100,100,800,600)
+    assert "constrained" in result.message

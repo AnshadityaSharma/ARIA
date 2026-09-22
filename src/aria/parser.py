@@ -11,7 +11,15 @@ class ParseError(ValueError):
 
 
 def parse(text: str) -> Action:
+    # Preserve path punctuation and case before normalizing command grammar.
+    if m := re.fullmatch(r'delete(?: file)?\s+(.+)', text.strip(), re.IGNORECASE):
+        return Action(ActionType.DELETE_PATH, m.group(1).strip().strip('"')).validate()
+    if m := re.fullmatch(r'(move|copy|rename) file\s+(.+?)\s+to\s+(.+)', text.strip(), re.IGNORECASE):
+        kind = {"move": ActionType.MOVE_PATH, "copy": ActionType.COPY_PATH, "rename": ActionType.RENAME_PATH}[m.group(1).lower()]
+        return Action(kind, m.group(2).strip().strip('"'), {"destination": m.group(3).strip().strip('"')}).validate()
     raw = " ".join(text.strip().lower().split())
+    if raw in {"shutdown", "shut down", "shut down computer"}:
+        return Action(ActionType.SHUTDOWN)
     if not raw:
         raise ParseError("Command is empty")
     if m := re.fullmatch(r"open (?:application |app )?(.+)", raw):
