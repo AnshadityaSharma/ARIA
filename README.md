@@ -4,19 +4,27 @@ ARIA (Adaptive Runtime Intelligence Assistant) is a local-first, latency-first W
 
 The deterministic desktop core is independent of speech recognition.
 
-Sprint 2 added local voice input. Sprint 3 adds a global hotkey, status overlay,
-and action-bound confirmations; no cloud inference or LLM is used.
+Sprint 2 added local voice input. Sprint 3 added a global hotkey, status overlay,
+and action-bound confirmations. Sprint 4 adds a lazy persistent Playwright browser
+for deterministic navigation, search, accessible interaction, YouTube playback, and
+verified downloads. No cloud inference or LLM is used.
 
 ## Setup
 
 ```powershell
 uv sync --dev
+uv run playwright install chromium
 uv run aria
 ```
 
 Type `help` in the interactive prompt. Start local push-to-talk mode with `uv run aria --voice`; press Enter, speak a short command, then pause. The multilingual model is downloaded once and all transcription then runs locally. Run tests with `uv run pytest`.
 
 Architecture and scope are documented in `context.md` and `docs/architecture.md`.
+
+Browser examples include open YouTube, search YouTube for Blinding Lights, play
+Blinding Lights, open example.com, type hello in Search, click button Continue, and
+download Test file. Browser controls use accessible names, not CSS selectors or
+screen coordinates.
 
 ## Desktop mode (Sprint 3)
 

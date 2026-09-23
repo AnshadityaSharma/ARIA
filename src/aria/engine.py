@@ -13,13 +13,16 @@ from aria.permissions import ConfirmationRequired, PermissionEngine, PermissionD
 
 
 class Engine:
-    def __init__(self, windows=None, applications=None, files=None, volume=None, permissions=None, shutdown=None):
+    def __init__(self, windows=None, applications=None, files=None, volume=None, permissions=None, shutdown=None,
+                 browser_factory=None):
         self.windows = windows or WindowManager(); self.applications = applications or Applications()
         self.files = files or Files(); self.volume = volume or Volume(); self.state = WindowState()
         self.permissions = permissions or PermissionEngine()
         self._execution_lock = threading.RLock()
         self._pending_identity = None
         self.activation_window = None
+        self._browser = None
+        self._browser_factory = browser_factory
         if shutdown is None:
             from aria.desktop import shutdown_computer
             shutdown = shutdown_computer
@@ -51,6 +54,9 @@ class Engine:
     def _prepare(self, action):
         if self.permissions.evaluate(action) == Decision.DENY:
             raise PermissionDenied("Unsupported or malformed action")
+        if action.kind in {T.OPEN_WEBSITE, T.NAVIGATE_BROWSER}:
+            from aria.browser import normalize_url
+            action = Action(action.kind, normalize_url(action.target), dict(action.params)).validate()
         if action.kind == T.CREATE_FOLDER:
             name = action.params["name"]
             if Path(name).name != name or name in {".", ".."}:
@@ -119,7 +125,7 @@ class Engine:
         event("action_start")
         started = time.perf_counter()
         try:
-            result = self.__perform(action)
+            result = self.__perform(action, event)
             event("action_complete")
             logging.getLogger("aria").info("action=%s success=true elapsed_ms=%.3f", action.kind, (time.perf_counter()-started)*1000)
             return result
@@ -127,8 +133,19 @@ class Engine:
             logging.getLogger("aria").exception("action=%s execution_failed", action.kind)
             raise
 
-    def __perform(self, action: Action) -> Result:
+    def __perform(self, action: Action, event) -> Result:
         k = action.kind
+        browser_actions = {T.OPEN_BROWSER, T.OPEN_WEBSITE, T.NAVIGATE_BROWSER, T.SEARCH_WEB,
+                           T.SEARCH_YOUTUBE, T.PLAY_YOUTUBE, T.TYPE_IN_BROWSER,
+                           T.CLICK_BROWSER_ELEMENT, T.SUBMIT_BROWSER, T.DOWNLOAD_FILE}
+        if k in browser_actions:
+            if self._browser is None:
+                if self._browser_factory is None:
+                    from aria.browser import BrowserManager
+                    self._browser = BrowserManager(files=self.files)
+                else:
+                    self._browser = self._browser_factory()
+            return self._browser.execute(action, event)
         if k == T.SHUTDOWN:
             self._shutdown()
             return Result(True, "Windows shutdown requested")
@@ -165,3 +182,13 @@ class Engine:
         if k in operations: path = operations[k](action.target, action.params["destination"]); return Result(True, f"Completed: {path}")
         if k == T.DELETE_PATH: self.files.delete(action.target); return Result(True, "Moved item to Recycle Bin")
         raise NotImplementedError(k)
+
+    @property
+    def browser_state(self):
+        return None if self._browser is None else self._browser.state
+
+    def close(self):
+        with self._execution_lock:
+            if self._browser is not None:
+                self._browser.close()
+                self._browser = None

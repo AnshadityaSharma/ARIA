@@ -17,3 +17,11 @@ boundary. File rechecks are not transactional locks against concurrent external 
 Audio stays in memory; there is no idle microphone loop. Interactive ASR uses cached
 local weights only. Weight provisioning is an explicit setup download, not remote
 inference. Local diagnostics contain action metadata, file paths, timings, and errors.
+
+Browser URLs are limited to HTTP(S) and embedded credentials are rejected. General
+browser actions use accessible names/roles and never accept arbitrary JavaScript or
+CSS selectors. General clicks and downloads are LOW risk; submit is MEDIUM and binds
+the exact immutable action to a single-use confirmation. Downloads refuse overwrite
+and verify the saved file. This is not a sandbox against a malicious website, and
+ARIA does not enter passwords or implement purchase, messaging, email, or account
+change workflows in Phase 6.

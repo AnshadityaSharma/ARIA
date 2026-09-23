@@ -22,6 +22,27 @@ def parse(text: str) -> Action:
         return Action(ActionType.SHUTDOWN)
     if not raw:
         raise ParseError("Command is empty")
+    if raw in {"open browser", "start browser"}:
+        return Action(ActionType.OPEN_BROWSER)
+    if m := re.fullmatch(r"(?:open|go to|navigate to) ((?:https?://)?[^ ]+\.[^ ]+)", raw):
+        kind = ActionType.OPEN_WEBSITE if raw.startswith("open ") else ActionType.NAVIGATE_BROWSER
+        return Action(kind, m.group(1)).validate()
+    if m := re.fullmatch(r"open (youtube|google|github)", raw):
+        return Action(ActionType.OPEN_WEBSITE, m.group(1)).validate()
+    if m := re.fullmatch(r"search (?:the )?web for (.+)", raw):
+        return Action(ActionType.SEARCH_WEB, m.group(1)).validate()
+    if m := re.fullmatch(r"search youtube for (.+)", raw):
+        return Action(ActionType.SEARCH_YOUTUBE, m.group(1)).validate()
+    if m := re.fullmatch(r"play (.+?)(?: on youtube)?", raw):
+        return Action(ActionType.PLAY_YOUTUBE, m.group(1)).validate()
+    if m := re.fullmatch(r"type (.+?) (?:in|into) (.+)", raw):
+        return Action(ActionType.TYPE_IN_BROWSER, m.group(2), {"text": m.group(1)}).validate()
+    if m := re.fullmatch(r"click (?:(button|link|checkbox|radio|menuitem|tab) )?(.+)", raw):
+        return Action(ActionType.CLICK_BROWSER_ELEMENT, m.group(2), {"role": m.group(1) or "button"}).validate()
+    if m := re.fullmatch(r"submit(?: (.+))?", raw):
+        return Action(ActionType.SUBMIT_BROWSER, m.group(1) or "submit", {"role": "button"}).validate()
+    if m := re.fullmatch(r"download (.+)", raw):
+        return Action(ActionType.DOWNLOAD_FILE, m.group(1)).validate()
     if m := re.fullmatch(r"open (?:application |app )?(.+)", raw):
         target = m.group(1)
         if target in {"desktop", "documents", "downloads", "videos", "pictures"} or "\\" in target or ":/" in target:

@@ -31,3 +31,17 @@ Parsers return structured actions and never receive execution or approval author
 This is an application API boundary, not an OS sandbox for hostile in-process Python.
 Per-command timing records each lifecycle milestone. Native window placement is
 asynchronous with bounded readback; state stores the actual OS-constrained rectangle.
+
+## Sprint 4 browser capability
+
+browser.py is a separate Playwright adapter reached only after the same parser,
+schema validation, risk lookup, and permission gate as desktop actions. The engine
+constructs it lazily, so browser packages and Chromium processes remain absent from
+desktop-only startup. A persistent browser/context/page supports sequential commands;
+the state holds URL, last search, and last download.
+
+Website URLs are normalized and restricted to HTTP(S). Interactions accept
+accessibility roles/names or form labels; arbitrary JavaScript and CSS selector input
+are not capabilities. Downloads are saved to resolved local paths and verified.
+Browser lifecycle events extend the existing timeline callback without adding a
+second command system. See sprint4.md for limitations.

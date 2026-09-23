@@ -58,3 +58,35 @@ Confirm response → action start 1.76 ms; response → completed Recycle Bin op
 Logs record hotkey receipt, rendered listening state, microphone request/ready,
 speech endpoint detection, ASR start/end, parse, risk decision, confirmation
 shown/answered, and action start/end. Unreached milestones on failures are omitted.
+
+## Sprint 4 browser benchmark
+
+Run python scripts/browser_benchmark.py. It launches real Playwright Chromium
+against a deterministic loopback page and reports lazy engine initialization, process
+tree RSS/CPU without and with Chromium, startup/navigation/interaction/download
+latencies, download verification, and post-close child-process count. Generated raw
+results are written to logs/browser-baseline.json and are intentionally ignored.
+
+### 2026-09-22 Sprint 4 local browser baseline
+
+Windows 11 build 26200, Python 3.12.10, Playwright Chromium 153, headless, loopback
+HTTP page. CPU follows psutil's process convention and is a one-second sample.
+
+| Measurement | Observed |
+| --- | ---: |
+| Lazy engine construction | 0.058 ms |
+| Without browser | 1 process; 30.53 MB RSS; 0.0% CPU |
+| Browser startup | 803.464 ms |
+| First launch plus navigation | 835.029 ms |
+| With browser idle sample | 6 processes; 319.40 MB RSS; 14.2% CPU |
+| Warm navigation | 19.371 ms |
+| Accessible field fill | 47.875 ms |
+| Confirmed local form submit | 85.825 ms |
+| Download and disk verification | 305.438 ms |
+| After close | 1 process; 40.14 MB RSS |
+
+The live YouTube smoke also passed in 11.78 seconds during one run. That includes
+browser launch, two YouTube navigations, result discovery, selection, and playback
+verification. Repeated runs varied because ads/media delivery sometimes left the
+correct watch page paused; the external smoke reports that condition separately. The
+successful observation is not a stable latency target.

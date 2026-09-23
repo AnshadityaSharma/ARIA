@@ -27,3 +27,21 @@ Relative paths resolve against ARIA's launch directory; the dialog shows absolut
 Configure `--confirmation-timeout 45` or `--confirm-low` as needed.
 Confirmation dialogs are available in desktop mode; legacy CLI modes reject risky
 actions without executing them. Spoken filenames remain subject to ASR accuracy.
+
+## Sprint 4 browser commands
+
+- open browser
+- open YouTube, Google, or GitHub
+- open example.com / go to https://example.com
+- search the web for QUERY
+- search YouTube for QUERY
+- play TITLE / play TITLE on YouTube
+- type TEXT in ACCESSIBLE-FIELD-NAME
+- click button, link, checkbox, radio, menuitem, or tab ACCESSIBLE-NAME
+- submit ACCESSIBLE-BUTTON-NAME — medium-risk confirmation
+- download ACCESSIBLE-LINK-NAME — low risk; default Downloads folder
+
+Start with open browser or open WEBSITE. If the page is closed externally, ARIA asks
+you to open a new browser session. Provision Playwright Chromium once with:
+
+    uv run playwright install chromium

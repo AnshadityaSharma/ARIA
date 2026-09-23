@@ -33,6 +33,11 @@ class Timeline:
             ("response_to_action_complete_ms", "confirmation_response", "action_complete"),
             ("risk_decision_ms", "parse_complete", "risk_decision"),
             ("speech_endpoint_to_asr_ms", "speech_end", "asr_start"),
+            ("browser_startup_ms", "browser_start", "browser_ready"),
+            ("browser_navigation_ms", "browser_navigation_start", "browser_navigation_complete"),
+            ("browser_interaction_ms", "browser_interaction_start", "browser_interaction_complete"),
+            ("browser_download_ms", "browser_download_start", "browser_download_complete"),
+            ("youtube_result_to_playback_ms", "youtube_result_selection_start", "youtube_playback_ready"),
         ):
             if start in self.events and end in self.events:
                 result[label] = round((self.events[end]-self.events[start])*1000, 3)

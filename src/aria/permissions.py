@@ -93,6 +93,7 @@ def describe(action: Action) -> str:
         T.MOVE_PATH: ("Move file or folder", "The item will move to the destination shown. Existing items will not be overwritten."),
         T.RENAME_PATH: ("Rename file or folder", "The item will receive the destination name shown. Existing items will not be overwritten."),
         T.SHUTDOWN: ("Shut down computer", "Windows will shut down and unsaved work may be affected."),
+        T.DOWNLOAD_FILE: ("Download file", "The browser will save the selected file to local storage."),
     }
     label, consequence = descriptions.get(action.kind, (action.kind.value.replace("_", " ").title(), "This operation will change the specified target."))
     parts = ["ARIA needs confirmation", f"Action: {label}"]

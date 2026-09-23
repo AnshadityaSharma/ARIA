@@ -62,7 +62,7 @@ class ConfirmationDialog:
 
 
 class DesktopApp:
-    def __init__(self, model="base", timeout=30, confirm_low=False, voice_factory=None):
+    def __init__(self, model="base", timeout=30, confirm_low=False, voice_factory=None, browser_factory=None):
         from aria.engine import Engine
         self.root = tk.Tk()
         self.root.withdraw()
@@ -75,7 +75,7 @@ class DesktopApp:
         self.dialog = None
         self.closed = False
         self.started = time.perf_counter()
-        self.engine = Engine(permissions=PermissionEngine(timeout, confirm_low))
+        self.engine = Engine(permissions=PermissionEngine(timeout, confirm_low), browser_factory=browser_factory)
         self.label = ttk.Label(self.root, text="ARIA — Loading local speech model…", padding=14, wraplength=350)
         self.label.pack()
         ttk.Button(self.root, text="Quit", command=self.close).pack(pady=(0, 8))
@@ -153,6 +153,8 @@ class DesktopApp:
             self.dialog.finish("cancelled")
         if self.controller:
             self.controller.close()
+        else:
+            self.engine.close()
         if self.hotkey:
             self.hotkey.stop()
         self.root.destroy()

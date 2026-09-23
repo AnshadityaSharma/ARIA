@@ -127,4 +127,8 @@ class ActivationController:
         if self.prompt:
             self.prompt.respond("cancelled")
         self.engine.cancel()
+        try:
+            self.pool.submit(self.engine.close).result(timeout=15)
+        except Exception:
+            self.log.exception("engine_cleanup_failed")
         self.pool.shutdown(wait=False, cancel_futures=True)

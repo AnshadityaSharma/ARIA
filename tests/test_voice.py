@@ -32,3 +32,17 @@ def test_low_confidence_never_executes():
 def test_incomplete_timeline_omits_unmeasured_intervals():
     timeline = Timeline(microphone_start=1, asr_start=2)
     assert timeline.milliseconds() == {"capture": 1000}
+
+
+def test_browser_timeline_intervals_are_reported():
+    timeline = Timeline()
+    for name, value in (
+        ("browser_start", 1), ("browser_ready", 2),
+        ("browser_navigation_start", 2), ("browser_navigation_complete", 2.5),
+        ("browser_download_start", 3), ("browser_download_complete", 3.25),
+    ):
+        timeline.mark(name, value)
+    values = timeline.milliseconds()
+    assert values["browser_startup_ms"] == 1000
+    assert values["browser_navigation_ms"] == 500
+    assert values["browser_download_ms"] == 250

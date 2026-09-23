@@ -28,6 +28,16 @@ class ActionType(StrEnum):
     MUTE = "MUTE"
     UNMUTE = "UNMUTE"
     SHUTDOWN = "SHUTDOWN"
+    OPEN_BROWSER = "OPEN_BROWSER"
+    OPEN_WEBSITE = "OPEN_WEBSITE"
+    NAVIGATE_BROWSER = "NAVIGATE_BROWSER"
+    SEARCH_WEB = "SEARCH_WEB"
+    SEARCH_YOUTUBE = "SEARCH_YOUTUBE"
+    PLAY_YOUTUBE = "PLAY_YOUTUBE"
+    TYPE_IN_BROWSER = "TYPE_IN_BROWSER"
+    CLICK_BROWSER_ELEMENT = "CLICK_BROWSER_ELEMENT"
+    SUBMIT_BROWSER = "SUBMIT_BROWSER"
+    DOWNLOAD_FILE = "DOWNLOAD_FILE"
 
 
 class Risk(StrEnum):
@@ -57,6 +67,16 @@ RISK = MappingProxyType({
     ActionType.RENAME_PATH: Risk.MEDIUM,
     ActionType.DELETE_PATH: Risk.HIGH,
     ActionType.SHUTDOWN: Risk.HIGH,
+    ActionType.OPEN_BROWSER: Risk.NONE,
+    ActionType.OPEN_WEBSITE: Risk.NONE,
+    ActionType.NAVIGATE_BROWSER: Risk.NONE,
+    ActionType.SEARCH_WEB: Risk.NONE,
+    ActionType.SEARCH_YOUTUBE: Risk.NONE,
+    ActionType.PLAY_YOUTUBE: Risk.NONE,
+    ActionType.TYPE_IN_BROWSER: Risk.NONE,
+    ActionType.CLICK_BROWSER_ELEMENT: Risk.LOW,
+    ActionType.SUBMIT_BROWSER: Risk.MEDIUM,
+    ActionType.DOWNLOAD_FILE: Risk.LOW,
 })
 
 
@@ -85,7 +105,10 @@ class Action:
         if self.target is not None and (not isinstance(self.target, str) or not self.target.strip() or any(ord(c) < 32 for c in self.target)):
             raise ValueError("Invalid action target")
         required = {ActionType.OPEN_APPLICATION, ActionType.CREATE_FOLDER, ActionType.OPEN_PATH,
-                    ActionType.COPY_PATH, ActionType.MOVE_PATH, ActionType.RENAME_PATH, ActionType.DELETE_PATH}
+                    ActionType.COPY_PATH, ActionType.MOVE_PATH, ActionType.RENAME_PATH, ActionType.DELETE_PATH,
+                    ActionType.OPEN_WEBSITE, ActionType.NAVIGATE_BROWSER, ActionType.SEARCH_WEB,
+                    ActionType.SEARCH_YOUTUBE, ActionType.PLAY_YOUTUBE, ActionType.TYPE_IN_BROWSER,
+                    ActionType.CLICK_BROWSER_ELEMENT, ActionType.SUBMIT_BROWSER, ActionType.DOWNLOAD_FILE}
         if self.kind in required and not self.target:
             raise ValueError("Action requires a target")
         fields = {
@@ -93,16 +116,26 @@ class Action:
             ActionType.CREATE_FOLDER: {"name"}, ActionType.COPY_PATH: {"destination"},
             ActionType.MOVE_PATH: {"destination"}, ActionType.RENAME_PATH: {"destination"},
             ActionType.SET_VOLUME: {"level"}, ActionType.CHANGE_VOLUME: {"delta"},
+            ActionType.TYPE_IN_BROWSER: {"text"}, ActionType.CLICK_BROWSER_ELEMENT: {"role"},
+            ActionType.SUBMIT_BROWSER: {"role"}, ActionType.DOWNLOAD_FILE: {"destination"},
         }
         if set(self.params) - fields.get(self.kind, set()):
             raise ValueError("Unexpected action parameters")
         if any(type(v) not in (str, int, float) for v in self.params.values()):
             raise ValueError("Action parameters must be scalar values")
         for key in ("destination", "name"):
-            if key in fields.get(self.kind, set()):
+            if key in self.params or (key == "destination" and self.kind in {ActionType.COPY_PATH, ActionType.MOVE_PATH, ActionType.RENAME_PATH}) or (key == "name" and self.kind == ActionType.CREATE_FOLDER):
                 value = self.params.get(key)
                 if not isinstance(value, str) or not value.strip() or any(ord(c) < 32 for c in value):
                     raise ValueError(f"Missing or invalid {key}")
+        if self.kind == ActionType.TYPE_IN_BROWSER:
+            value = self.params.get("text")
+            if not isinstance(value, str) or not value.strip() or any(ord(c) < 32 for c in value):
+                raise ValueError("Browser text must be a non-empty printable string")
+        if self.kind in {ActionType.CLICK_BROWSER_ELEMENT, ActionType.SUBMIT_BROWSER}:
+            role = self.params.get("role", "button")
+            if role not in {"button", "link", "checkbox", "radio", "menuitem", "tab"}:
+                raise ValueError("Unsupported browser element role")
         if self.kind == ActionType.SHUTDOWN and self.target is not None:
             raise ValueError("Shutdown does not accept a target")
         for key, low, high in (("level", 0, 100), ("delta", -100, 100)):
