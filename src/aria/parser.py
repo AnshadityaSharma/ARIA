@@ -107,8 +107,14 @@ def _literal_command(control: str) -> bool:
     return bool(re.match(r"^(?:search (?:the )?web for|search youtube for|type |play |download )", control))
 
 
+def _control_without_quoted_literals(surface: str) -> str:
+    masked = re.sub(r'"[^"\r\n]*"', ' "literal" ', surface)
+    return " ".join(masked.casefold().split())
+
+
 def guard(command: NormalizedCommand) -> None:
-    control = command.control
+    control = (command.control if '"' not in command.surface
+               else _control_without_quoted_literals(command.surface))
     if "<|" in command.source:
         raise MalformedCommand("Model control delimiters are not accepted in commands.")
     if _literal_command(control): return
@@ -116,7 +122,7 @@ def guard(command: NormalizedCommand) -> None:
         raise UnsupportedCommand("The command is negated; nothing was proposed.")
     if re.search(r"\b(?:and|then)\s+(?:then\s+)?(?:open|launch|start|look|search|move|put|place|make|resize|delete|remove|run|click|type|play|maximize|minimize|restore)\b", control):
         raise ClarificationRequired("Please give one action at a time; split that request into separate commands.")
-    if re.search(r"\b(?:delete|remove|erase)\s+(?:it|that|everything|all)\b", control):
+    if re.search(r"\b(?:delete|remove|erase)(?:\s+(?:file|folder))?\s+(?:it|that|everything|all)\b", control):
         raise UnsupportedCommand("Specify exactly one file or folder to delete.")
     if re.fullmatch(r"open\s+(?:that|it|this|something)", control):
         raise ClarificationRequired("Name the application, file, or website to open.")
@@ -126,14 +132,58 @@ def guard(command: NormalizedCommand) -> None:
         raise UnsupportedCommand("That request is outside the supported computer capabilities.")
 
 
+def _literal(value: str) -> str:
+    value = value.strip()
+    if re.fullmatch(r'"[^"\r\n]+"[.!?]', value): value = value[:-1]
+    if value.startswith('"') or value.endswith('"'):
+        if len(value) < 2 or not (value.startswith('"') and value.endswith('"')):
+            raise MalformedCommand("Filesystem paths must have balanced quotes.")
+        value = value[1:-1]
+    if not value: raise MalformedCommand("A filesystem path or name is required.")
+    return value
+
+
+def _split_outside_quotes(value: str, words: tuple[str, ...]) -> tuple[str, str] | None:
+    quoted = False; matches = []
+    lowered = value.casefold()
+    for index, character in enumerate(value):
+        if character == '"': quoted = not quoted
+        if not quoted:
+            for word in words:
+                if lowered.startswith(word, index): matches.append((index, word))
+    if quoted: raise MalformedCommand("Filesystem paths must have balanced quotes.")
+    if not matches: return None
+    if len(matches) != 1:
+        raise ClarificationRequired("Quote filesystem paths containing command separators such as 'to', 'in', or 'on'.")
+    index, word = matches[0]
+    return value[:index], value[index + len(word):]
+
+
 def _file_action(surface: str) -> Action | None:
-    if match := re.fullmatch(r'delete(?: file)?\s+(.+)', surface, re.I):
-        return Action(ActionType.DELETE_PATH, match.group(1).strip().strip('"')).validate()
-    if match := re.fullmatch(r'(move|copy|rename) file\s+(.+?)\s+to\s+(.+)', surface, re.I):
+    if match := re.fullmatch(r'open\s+(?:that|the last|last)\s+(file|folder)', surface, re.I):
+        return Action(ActionType.OPEN_PATH,
+                      f"recent:{'file' if match.group(1).casefold() == 'file' else 'directory'}").validate()
+    if match := re.fullmatch(r'open\s+(file|folder)\s+(.+)', surface, re.I):
+        reference = match.group(2).strip().casefold()
+        target = f"recent:{'file' if match.group(1).casefold() == 'file' else 'directory'}" if reference in {"that", "the last", "last"} else _literal(match.group(2))
+        return Action(ActionType.OPEN_PATH, target).validate()
+    if match := re.fullmatch(r'delete(?:\s+(?:file|folder))?\s+(.+)', surface, re.I):
+        return Action(ActionType.DELETE_PATH, _literal(match.group(1))).validate()
+    if match := re.fullmatch(r'(move|copy|rename)\s+(?:file|folder)\s+(.+)', surface, re.I):
+        split = _split_outside_quotes(match.group(2), (" to ",))
+        if split is None: raise ClarificationRequired("Specify both source and destination using 'to'.")
+        source, destination = map(_literal, split)
+        if source.casefold() in {"that", "the last", "last"}:
+            if match.group(1).casefold() != "copy":
+                raise ClarificationRequired("Move, rename, and delete require an explicit source path.")
+            source = "recent:file"
         kind = {"move": ActionType.MOVE_PATH, "copy": ActionType.COPY_PATH,
                 "rename": ActionType.RENAME_PATH}[match.group(1).casefold()]
-        return Action(kind, match.group(2).strip().strip('"'),
-                      {"destination": match.group(3).strip().strip('"')}).validate()
+        return Action(kind, source, {"destination": destination}).validate()
+    if match := re.fullmatch(r'create\s+folder(?:\s+called)?\s+(.+)', surface, re.I):
+        split = _split_outside_quotes(match.group(1), (" in ", " on "))
+        name, parent = (match.group(1), "desktop") if split is None else split
+        return Action(ActionType.CREATE_FOLDER, _literal(parent), {"name": _literal(name)}).validate()
     return None
 
 
@@ -197,7 +247,6 @@ def parse(text: str, *, on_event=None) -> Action:
         return done(Action(ActionType.MOVE_WINDOW, _reference(m.group(1)), params))
     if m := re.fullmatch(fr"move\s+(.+?)(?:\s+to)?(?:\s+the)?\s+({DIRECTION}){POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.MOVE_WINDOW, _trim_target(m.group(1)), {"position": DIRECTIONS[m.group(2).casefold()]}))
 
-    if m := re.fullmatch(r"create folder (?:called )?(.+?)(?: (?:in|on) (desktop|documents|downloads|videos|pictures))?", control): return done(Action(ActionType.CREATE_FOLDER, m.group(2) or "desktop", {"name": m.group(1)}))
     if control in {"take screenshot", "take a screenshot"}: return done(Action(ActionType.TAKE_SCREENSHOT))
     if m := re.fullmatch(fr"set volume (?:to )?({NUMBER})\s*(?:%|percent)?{POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.SET_VOLUME, params={"level": _number(m.group(1))}))
     if m := re.fullmatch(fr"(?:increase|decrease|raise|lower|reduce) volume(?: by)?\s+({NUMBER})\s*(?:%|percent)?{POLITE_SUFFIX}", surface, re.I):

@@ -198,6 +198,27 @@ class WindowState:
         if action is not None: self.last_action = action
 
 
+@dataclass(slots=True)
+class FileState:
+    path: str | None = None
+    identity: Any = None
+    kind: str | None = None
+    last_action: ActionType | None = None
+    updated_at: float | None = None
+    verified: bool = False
+
+    def update(self, path: str, identity: Any, kind: str, action: ActionType,
+               *, now: float | None = None) -> None:
+        self.path, self.identity, self.kind, self.last_action = path, identity, kind, action
+        self.updated_at = time.monotonic() if now is None else now
+        self.verified = True
+
+    def clear(self) -> None:
+        self.path = self.kind = self.last_action = self.updated_at = None
+        self.identity = None
+        self.verified = False
+
+
 @dataclass(frozen=True, slots=True)
 class Result:
     ok: bool

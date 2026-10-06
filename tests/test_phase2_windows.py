@@ -259,5 +259,7 @@ def test_open_path_is_observed_but_explicitly_unverified(tmp_path):
 
 
 def test_known_folder_resolution_uses_windows_value(monkeypatch, tmp_path):
-    monkeypatch.setattr("aria.desktop.known_folder", lambda name: tmp_path / name)
-    assert Files().resolve("documents") == tmp_path / "documents"
+    from aria.filesystem import PathResolver
+    resolver = PathResolver(known_provider=lambda name: tmp_path / name)
+    (tmp_path / "documents").mkdir()
+    assert Files(resolver=resolver).resolve("documents") == tmp_path / "documents"

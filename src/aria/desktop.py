@@ -1,31 +1,13 @@
 from __future__ import annotations
 
-import ctypes
 import json
 import os
-import shutil
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import UUID
 from aria.parser import ClarificationRequired
-
-
-KNOWN = {
-    "desktop": "B4BFCC3A-DB2C-424C-B029-7FE99A87C641", "documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
-    "downloads": "374DE290-123F-4565-9164-39C4925E467B", "pictures": "33E28130-4E1E-4676-835A-98395C3BC3BB",
-    "videos": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
-}
-
-
-def known_folder(name: str) -> Path:
-    guid = UUID(KNOWN[name.casefold()]); raw = (ctypes.c_ubyte * 16).from_buffer_copy(guid.bytes_le)
-    ptr = ctypes.c_wchar_p()
-    if ctypes.windll.shell32.SHGetKnownFolderPath(ctypes.byref(raw), 0, None, ctypes.byref(ptr)):
-        raise OSError(f"Cannot resolve {name}")
-    try: return Path(ptr.value)
-    finally: ctypes.windll.ole32.CoTaskMemFree(ptr)
+from aria.filesystem import Files, KNOWN, known_folder
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,35 +111,6 @@ class Applications:
         application = self.resolve(name) if isinstance(name, str) else name
         os.startfile(f"shell:AppsFolder\\{application.app_id}")
         return application
-
-
-class Files:
-    def resolve(self, value: str) -> Path:
-        return known_folder(value) if value.casefold() in KNOWN else Path(value).expanduser().resolve()
-    def create_folder(self, parent: str, name: str) -> Path:
-        if Path(name).name != name: raise ValueError("Folder name must not contain a path")
-        path = self.resolve(parent) / name; path.mkdir(exist_ok=False); return path
-    def open(self, value: str) -> Path:
-        path = self.resolve(value)
-        if not path.exists(): raise FileNotFoundError(path)
-        os.startfile(path); return path
-    def copy(self, source: str, destination: str) -> Path:
-        src, dst = self.resolve(source), self.resolve(destination)
-        if dst.exists(): raise FileExistsError(dst)
-        if src.is_dir(): return Path(shutil.copytree(src, dst))
-        with src.open("rb") as reader, dst.open("xb") as writer:
-            shutil.copyfileobj(reader, writer)
-        return dst
-    def move(self, source: str, destination: str) -> Path:
-        if self.resolve(destination).exists(): raise FileExistsError(destination)
-        return Path(shutil.move(self.resolve(source), self.resolve(destination)))
-    def rename(self, source: str, name: str) -> Path:
-        src = self.resolve(source)
-        if src.with_name(name).exists(): raise FileExistsError(name)
-        return src.rename(src.with_name(name))
-    def delete(self, value: str) -> None:
-        from send2trash import send2trash
-        send2trash(str(self.resolve(value)))
 
 
 def screenshot(destination: str | None = None) -> Path:

@@ -22,4 +22,4 @@ packages = ["src/aria"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
-markers = ["windows_integration: changes a real disposable Windows window", "browser_integration: launches a real local Chromium browser", "external_browser: accesses a live public website"]
+markers = ["windows_integration: changes a real disposable Windows window", "filesystem_integration: changes disposable temporary filesystem fixtures", "browser_integration: launches a real local Chromium browser", "external_browser: accesses a live public website"]

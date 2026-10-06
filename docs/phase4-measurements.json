@@ -1,0 +1,164 @@
+{
+  "phase": 4,
+  "method": "Disposable local fixtures; perf_counter_ns; linearly interpolated p50/p95. Operation measurements include Engine verification. Hash scaling separates metadata and streaming content work.",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "windows_release": "11",
+    "windows_build": "10.0.26200",
+    "python": "3.12.10",
+    "processor": "Intel64 Family 6 Model 165 Stepping 2, GenuineIntel",
+    "logical_cpus": 16,
+    "physical_memory_gib": 31.750675201416016
+  },
+  "sample_counts": {
+    "standard": 30,
+    "large_content": 10,
+    "startup": 10
+  },
+  "timing_ms": {
+    "path_resolution_absolute": {
+      "samples": 30,
+      "p50": 0.1199,
+      "p95": 0.16501,
+      "mean": 0.1315
+    },
+    "path_resolution_bare_name": {
+      "samples": 30,
+      "p50": 0.43765,
+      "p95": 0.5707500000000001,
+      "mean": 0.45742
+    },
+    "known_folder_resolution": {
+      "samples": 30,
+      "p50": 0.0763,
+      "p95": 0.084075,
+      "mean": 0.07750666666666667
+    },
+    "metadata_snapshot_file": {
+      "samples": 30,
+      "p50": 0.12335,
+      "p95": 0.13391,
+      "mean": 0.12752
+    },
+    "metadata_manifest_25_entries": {
+      "samples": 30,
+      "p50": 0.44265,
+      "p95": 0.7565750000000001,
+      "mean": 0.49359000000000003
+    },
+    "confirmation_binding": {
+      "samples": 30,
+      "p50": 0.3508,
+      "p95": 0.6222,
+      "mean": 0.4015633333333333
+    },
+    "identity_recheck": {
+      "samples": 30,
+      "p50": 0.2852,
+      "p95": 0.6087850000000001,
+      "mean": 0.3317
+    },
+    "confirmation_display": {
+      "samples": 30,
+      "p50": 0.0013,
+      "p95": 0.0035100000000000014,
+      "mean": 0.0018199999999999998
+    },
+    "create_and_verify": {
+      "samples": 30,
+      "p50": 2.4461500000000003,
+      "p95": 3.027585,
+      "mean": 2.5643633333333336
+    },
+    "copy_1_mib_and_verify": {
+      "samples": 30,
+      "p50": 15.0088,
+      "p95": 17.04569,
+      "mean": 15.429833333333333
+    },
+    "same_volume_move_and_verify": {
+      "samples": 30,
+      "p50": 11.7366,
+      "p95": 14.352255,
+      "mean": 12.065069999999999
+    },
+    "rename_and_verify": {
+      "samples": 30,
+      "p50": 9.076799999999999,
+      "p95": 9.92082,
+      "mean": 8.960736666666666
+    },
+    "full_text_to_verified_copy": {
+      "samples": 30,
+      "p50": 10.862549999999999,
+      "p95": 11.847665,
+      "mean": 10.812876666666666
+    },
+    "full_text_to_pending_confirmation": {
+      "samples": 30,
+      "p50": 5.037850000000001,
+      "p95": 6.466455000000001,
+      "mean": 5.18636
+    },
+    "fresh_process_startup": {
+      "samples": 10,
+      "p50": 223.56465,
+      "p95": 308.93863999999996,
+      "mean": 245.16183999999998
+    }
+  },
+  "hashing_and_manifest_scaling_ms": {
+    "4_kib": {
+      "samples": 30,
+      "p50": 0.79785,
+      "p95": 1.301805,
+      "mean": 0.8987533333333333,
+      "bytes": 4096,
+      "entries": 1,
+      "verification": "streaming SHA-256 content"
+    },
+    "1_mib": {
+      "samples": 30,
+      "p50": 2.8693,
+      "p95": 4.142295,
+      "mean": 3.052206666666667,
+      "bytes": 1048576,
+      "entries": 1,
+      "verification": "streaming SHA-256 content"
+    },
+    "8_mib": {
+      "samples": 10,
+      "p50": 20.21965,
+      "p95": 20.919135,
+      "mean": 20.12057,
+      "bytes": 8388608,
+      "entries": 1,
+      "verification": "streaming SHA-256 content"
+    },
+    "directory_25_entries": {
+      "samples": 30,
+      "p50": 18.72785,
+      "p95": 20.661089999999998,
+      "mean": 19.005053333333333,
+      "bytes": 102400,
+      "entries": 26,
+      "verification": "tree shape plus streaming content"
+    }
+  },
+  "resources": {
+    "rss_mib": 34.88671875,
+    "idle_window_seconds": 1.000817900057882,
+    "idle_cpu_percent_one_core": 0.0,
+    "process_count": 1,
+    "aria_source_bytes": 162924,
+    "pyproject_bytes": 916,
+    "lockfile_bytes": 69699,
+    "pyproject_sha256": "662c48b68ae491aeb4046ffe7ab05a8f48c1f61b8968221d8d2565a3683dd6ec",
+    "lockfile_sha256": "82c106ed5d3f044d601ed63531d4237f8f106fd2ccae80f51793bae39b28398c"
+  },
+  "limits": [
+    "Filesystem caches and antivirus activity are uncontrolled.",
+    "No universal operation latency is claimed; results depend on bytes and entries.",
+    "Cross-volume behavior is contract-tested separately and not timed without a second disposable volume."
+  ]
+}
