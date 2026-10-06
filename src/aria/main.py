@@ -15,6 +15,11 @@ def main() -> int:
     mode.add_argument("--voice",action="store_true")
     mode.add_argument("--desktop",action="store_true")
     options.add_argument("--model",default="base")
+    options.add_argument("--intent-model", type=Path, help="Opt in to local intent fallback with this GGUF file")
+    options.add_argument("--intent-runtime", type=Path, default=Path(".aria-runtime/b11126/llama-server.exe"))
+    options.add_argument("--intent-timeout", type=float, default=20)
+    options.add_argument("--intent-load-timeout", type=float, default=60)
+    options.add_argument("--intent-max-tokens", type=int, default=128)
     options.add_argument("--confirmation-timeout",type=float,default=30)
     options.add_argument("--confirm-low",action="store_true")
     options.add_argument("--browser-headless", action="store_true")
@@ -36,11 +41,18 @@ def main() -> int:
     )
     browser_factory = lambda: BrowserManager(browser_config)
     policy = PermissionEngine(args.confirmation_timeout, args.confirm_low)
+    interpreter = None
+    if args.intent_model:
+        from aria.intent import Interpreter
+        from aria.local_intent import IntentConfig, LocalIntentModel
+        interpreter = Interpreter(LocalIntentModel(IntentConfig(
+            args.intent_model, args.intent_runtime, args.intent_timeout,
+            args.intent_load_timeout, args.intent_max_tokens)))
     if args.desktop:
         from aria.ui import DesktopApp
-        DesktopApp(args.model, args.confirmation_timeout, args.confirm_low, browser_factory=browser_factory).run()
+        DesktopApp(args.model, args.confirmation_timeout, args.confirm_low, browser_factory=browser_factory, interpreter=interpreter).run()
         return 0
-    engine = Engine(permissions=policy, browser_factory=browser_factory)
+    engine = Engine(permissions=policy, browser_factory=browser_factory, interpreter=interpreter)
     atexit.register(engine.close)
     if args.voice:
         from aria.voice import LocalASR, VoiceController, VoiceError

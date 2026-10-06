@@ -64,11 +64,14 @@ class PermissionEngine:
                 self.log.info("confirmation_%s action=%s", reason, self._pending.action.kind)
                 self._pending = None
 
-    def request(self, action: Action) -> Pending:
+    def request(self, action: Action, *, target_detail: str | None = None) -> Pending:
         if self.evaluate(action) != Decision.CONFIRM:
             raise PermissionDenied("Only validated confirmation-required actions can be presented")
         with self._lock:
-            self._pending = Pending(secrets.token_urlsafe(32), action, self.clock() + self.timeout, describe(action))
+            description = describe(action)
+            if target_detail:
+                description += "\n\n" + target_detail
+            self._pending = Pending(secrets.token_urlsafe(32), action, self.clock() + self.timeout, description)
             self.log.info("confirmation_requested action=%s target=%s", action.kind, action.target)
             return self._pending
 
@@ -81,7 +84,7 @@ class PermissionEngine:
             if self.clock() >= pending.expires_at:
                 self.log.info("confirmation_timed_out action=%s", pending.action.kind)
                 raise PermissionDenied("Confirmation timed out; nothing was executed")
-            if self.evaluate(pending.action) == Decision.DENY:
+            if self.evaluate(pending.action) != Decision.CONFIRM:
                 raise PermissionDenied("Action is no longer valid")
             self.log.info("confirmation_confirmed action=%s", pending.action.kind)
             return pending.action

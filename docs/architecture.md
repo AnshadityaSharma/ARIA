@@ -45,3 +45,26 @@ accessibility roles/names or form labels; arbitrary JavaScript and CSS selector 
 are not capabilities. Downloads are saved to resolved local paths and verified.
 Browser lifecycle events extend the existing timeline callback without adding a
 second command system. See sprint4.md for limitations.
+
+## Sprint 5 intent interpretation
+
+Engine.interpret is shared by text and voice. Interpreter calls the original parser
+first and invokes an optional local model only on ParseError. Input safety checks
+prevent obvious ambiguous or compound commands from becoming generic app targets;
+browser query/text payloads retain their existing literal semantics.
+
+The model receives a capability-derived action vocabulary, not an application list.
+It proposes one action or reports uncertainty. Strict JSON decoding, existing
+Action.validate, additional literal-target/reference checks and the unchanged
+Engine permission gate precede dispatch. The model has no executors, risk controls,
+conversation memory or state mutation authority. Existing tracked-window and
+browser state remain the only state systems.
+
+LocalIntentModel lazily owns a persistent CPU llama.cpp process through authenticated
+loopback HTTP, with no remote URL option, tool calls or runtime downloads. Request
+deadlines kill the process; shutdown cancels it before joining the desktop worker.
+No model is required for tests or the default deterministic configuration.
+
+Model load/start/complete/timeout events extend Timeline. Actual native inference
+is blocked by Windows Application Control on the development machine, so protocol,
+quality and resource acceptance remain pending. See sprint5.md and benchmarks.md.

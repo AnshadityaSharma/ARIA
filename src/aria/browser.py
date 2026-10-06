@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 from urllib.parse import quote_plus, urlparse
 
-from aria.core import Action, ActionType as T, Result
+from aria.core import Action, ActionType as T, Result, Verification
 from aria.desktop import Files
 
 
@@ -64,6 +64,15 @@ class BrowserState:
     current_url: str | None = None
     last_download: Path | None = None
     last_search: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BrowserTarget:
+    page: object
+    url: str
+    element: object
+    signature: str
+    destination: object = None
 
 
 class BrowserManager:
@@ -138,7 +147,8 @@ class BrowserManager:
             raise BrowserError(f"Website returned HTTP {response.status}: {target}")
         self._sync_state()
         event("browser_navigation_complete")
-        return Result(True, f"Opened {self.state.current_url}", {"url": self.state.current_url})
+        return Result(True, f"Opened {self.state.current_url}", {"url": self.state.current_url},
+                      True, Verification.VERIFIED)
 
     def _named(self, role: str, name: str):
         page = self._require_page()
@@ -152,6 +162,47 @@ class BrowserManager:
             reason = "not found" if count == 0 else "ambiguous"
             raise BrowserError(f"Browser element {name!r} ({role}) is {reason}")
         return locator
+
+    @staticmethod
+    def _signature(element):
+        # Capture the exact node, its markup, and current form values. A changed
+        # page or form cannot reuse an earlier confirmation.
+        return element.evaluate("""el => JSON.stringify({
+            html: el.outerHTML,
+            form: el.form ? Array.from(new FormData(el.form).entries()) : null
+        })""")
+
+    def _download_destination_identity(self, action):
+        if action.kind != T.DOWNLOAD_FILE:
+            return None
+        root = self.files.resolve(action.params.get("destination") or str(self.config.downloads_dir or "downloads"))
+        if not root.exists():
+            raise BrowserError("Download destination cannot be bound for confirmation")
+        stat = root.stat()
+        return (str(root), stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+    def capture_target(self, action: Action) -> BrowserTarget:
+        page = self._require_page()
+        role = "link" if action.kind == T.DOWNLOAD_FILE else action.params.get("role", "button")
+        element = self._named(role, action.target).element_handle()
+        if element is None:
+            raise BrowserError("Browser target cannot be bound for confirmation")
+        return BrowserTarget(page, page.url, element, self._signature(element),
+                             self._download_destination_identity(action))
+
+    def same_target(self, action: Action, target: BrowserTarget) -> bool:
+        try:
+            page = self._require_page()
+            if page is not target.page or page.url != target.url:
+                return False
+            role = "link" if action.kind == T.DOWNLOAD_FILE else action.params.get("role", "button")
+            current = self._named(role, action.target).element_handle()
+            if current is None or not target.element.evaluate("(el, other) => el === other", current):
+                return False
+            return (self._signature(target.element) == target.signature and
+                    self._download_destination_identity(action) == target.destination)
+        except Exception:
+            return False
 
     def _type(self, field: str, text: str, event) -> Result:
         page = self._require_page()
@@ -171,9 +222,9 @@ class BrowserManager:
         event("browser_interaction_complete")
         return Result(True, f"Typed into {field}", {"url": self.state.current_url})
 
-    def _click(self, role: str, name: str, event) -> Result:
+    def _click(self, role: str, name: str, event, element=None) -> Result:
         event("browser_interaction_start")
-        self._named(role, name).click(timeout=self.config.element_timeout_ms)
+        (element or self._named(role, name)).click(timeout=self.config.element_timeout_ms)
         self._sync_state()
         event("browser_interaction_complete")
         return Result(True, f"Clicked {name}", {"url": self.state.current_url})
@@ -236,9 +287,9 @@ class BrowserManager:
         event("youtube_playback_ready")
         return Result(True, f"Playing {query} on YouTube", {"url": self.state.current_url})
 
-    def _download(self, link_name: str, destination: str | None, event) -> Result:
+    def _download(self, link_name: str, destination: str | None, event, element=None) -> Result:
         page = self._require_page()
-        link = self._named("link", link_name)
+        link = element or self._named("link", link_name)
         event("browser_download_start")
         with page.expect_download(timeout=self.config.download_timeout_ms) as info:
             link.click(timeout=self.config.element_timeout_ms)
@@ -254,7 +305,8 @@ class BrowserManager:
         self.state.last_download = path
         self._sync_state()
         event("browser_download_complete")
-        return Result(True, f"Downloaded {path}", {"path": str(path), "url": self.state.current_url})
+        return Result(True, f"Downloaded {path}", {"path": str(path), "url": self.state.current_url},
+                      True, Verification.UNVERIFIED)
 
     def execute(self, action: Action, event=lambda _name: None) -> Result:
         kind = action.kind
@@ -271,3 +323,12 @@ class BrowserManager:
         if kind == T.SUBMIT_BROWSER: return self._click(action.params.get("role", "button"), action.target, event)
         if kind == T.DOWNLOAD_FILE: return self._download(action.target, action.params.get("destination"), event)
         raise NotImplementedError(kind)
+
+    def execute_bound(self, action: Action, target: BrowserTarget, event=lambda _name: None) -> Result:
+        if not self.same_target(action, target):
+            raise BrowserError("Confirmed browser target changed; repeat the command")
+        if action.kind in {T.CLICK_BROWSER_ELEMENT, T.SUBMIT_BROWSER}:
+            return self._click(action.params.get("role", "button"), action.target, event, target.element)
+        if action.kind == T.DOWNLOAD_FILE:
+            return self._download(action.target, action.params.get("destination"), event, target.element)
+        raise BrowserError("This browser action has no bound execution path")

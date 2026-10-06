@@ -1,0 +1,725 @@
+{
+  "version": 1,
+  "split": "held_out",
+  "cases": [
+    {
+      "id": "hel-001",
+      "family": "direct_open_notepad",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open notepad",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:notepad",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-002",
+      "family": "direct_open_vscode",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open VS Code",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:vs code",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-003",
+      "family": "direct_resize_half",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "make it half the size",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "scale": 0.5
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-004",
+      "family": "direct_move_left",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "move it 100 pixels left",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "position": "left",
+              "pixels": 100
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-005",
+      "family": "direct_foreground_top",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "move this window to the top",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:9",
+            "params": {
+              "position": "top"
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-006",
+      "family": "direct_documents",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open documents",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_PATH",
+            "target": "literal:documents",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-007",
+      "family": "direct_mute",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "mute",
+          "expected": {
+            "outcome": "action",
+            "action": "MUTE",
+            "target": "none",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-008",
+      "family": "direct_search_web",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "search the web for lunar eclipse",
+          "expected": {
+            "outcome": "action",
+            "action": "SEARCH_WEB",
+            "target": "literal:lunar eclipse",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-009",
+      "family": "direct_delete_named",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "delete file C:\\Temp\\sample.pdf",
+          "expected": {
+            "outcome": "action",
+            "action": "DELETE_PATH",
+            "target": "literal:c:\\temp\\sample.pdf",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "hel-010",
+      "family": "paraphrase_launch_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Please launch Notepad for me",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:notepad",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "paraphrase"
+      ]
+    },
+    {
+      "id": "hel-011",
+      "family": "paraphrase_resize_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Could you shrink this window slightly?",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:9",
+            "params": {
+              "scale": 0.9
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "paraphrase"
+      ]
+    },
+    {
+      "id": "hel-012",
+      "family": "paraphrase_move_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Place that window in the bottom left",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "position": "bottom_left"
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "paraphrase"
+      ]
+    },
+    {
+      "id": "hel-013",
+      "family": "indian_open_2",
+      "cohort": "indian_english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Please open VS Code once",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:vs code",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "natural_phrasing"
+      ]
+    },
+    {
+      "id": "hel-014",
+      "family": "indian_volume_2",
+      "cohort": "indian_english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Kindly reduce volume by 10 percent",
+          "expected": {
+            "outcome": "action",
+            "action": "CHANGE_VOLUME",
+            "target": "none",
+            "params": {
+              "delta": -10
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "natural_phrasing"
+      ]
+    },
+    {
+      "id": "hel-015",
+      "family": "hinglish_open_2",
+      "cohort": "hinglish",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "notepad kholna",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:notepad",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "code_switching"
+      ]
+    },
+    {
+      "id": "hel-016",
+      "family": "hinglish_resize_2",
+      "cohort": "hinglish",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "isko thoda chhota karo",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "scale": 0.9
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "code_switching"
+      ]
+    },
+    {
+      "id": "hel-017",
+      "family": "ambiguous_ref_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open this",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "hel-018",
+      "family": "ambiguous_move_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "move the thing",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "hel-019",
+      "family": "unsupported_message_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "send a message to Alex",
+          "expected": {
+            "outcome": "abstain"
+          }
+        }
+      ],
+      "phenomena": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "hel-020",
+      "family": "unsupported_payment_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "pay my electricity bill",
+          "expected": {
+            "outcome": "abstain"
+          }
+        }
+      ],
+      "phenomena": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "hel-021",
+      "family": "unsafe_delete_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "remove all my files",
+          "expected": {
+            "outcome": "abstain"
+          }
+        }
+      ],
+      "phenomena": [
+        "unsupported",
+        "high_risk_negative"
+      ]
+    },
+    {
+      "id": "hel-022",
+      "family": "compound_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "launch browser then search for weather",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "compound"
+      ]
+    },
+    {
+      "id": "hel-023",
+      "family": "missing_context_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": null,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "move it right",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "stateful",
+        "missing_context"
+      ]
+    },
+    {
+      "id": "hel-024",
+      "family": "state_sequence_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": null,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open paint",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:paint",
+            "params": {}
+          }
+        },
+        {
+          "text": "make it 20% smaller",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "scale": 0.8
+            }
+          }
+        },
+        {
+          "text": "move that 100 pixels left",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "position": "left",
+              "pixels": 100
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "stateful"
+      ]
+    },
+    {
+      "id": "hel-025",
+      "family": "asr_open_2",
+      "cohort": "english",
+      "modality": "asr_transcript",
+      "provenance": "simulated_asr",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open note pad",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:notepad",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "asr_error"
+      ]
+    },
+    {
+      "id": "hel-026",
+      "family": "asr_indian_2",
+      "cohort": "indian_english",
+      "modality": "asr_transcript",
+      "provenance": "simulated_asr",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "please open download folder",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_PATH",
+            "target": "literal:downloads",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "asr_error"
+      ]
+    },
+    {
+      "id": "hel-027",
+      "family": "asr_hinglish_2",
+      "cohort": "hinglish",
+      "modality": "asr_transcript",
+      "provenance": "simulated_asr",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "camera kholo please",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:camera",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "asr_error"
+      ]
+    },
+    {
+      "id": "hel-028",
+      "family": "payload_2",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "search the web for how to buy a laptop",
+          "expected": {
+            "outcome": "action",
+            "action": "SEARCH_WEB",
+            "target": "literal:how to buy a laptop",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "literal_payload"
+      ]
+    }
+  ]
+}

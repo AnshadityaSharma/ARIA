@@ -1,0 +1,126 @@
+{
+  "phase": 2,
+  "method": "Native disposable Tk window; generated Start Menu shortcut; inert OPEN_PATH adapter. p50/p95 use linear interpolation over wall-clock milliseconds.",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "windows_release": "11",
+    "windows_build": "10.0.26200",
+    "python": "3.12.10",
+    "processor": "Intel64 Family 6 Model 165 Stepping 2, GenuineIntel",
+    "logical_cpus": 16,
+    "physical_memory_gib": 31.750675201416016,
+    "monitor_count": 1,
+    "virtual_screen": {
+      "x": 0,
+      "y": 0,
+      "width": 1536,
+      "height": 960
+    }
+  },
+  "timing_ms": {
+    "application_discovery_cold": {
+      "samples": 1,
+      "p50": 2515.3183,
+      "p95": 2515.3183,
+      "mean": 2515.3183
+    },
+    "application_discovery_warm": {
+      "samples": 10,
+      "p50": 0.0012499999999999998,
+      "p95": 0.004385000000000002,
+      "mean": 0.0018699999999999997
+    },
+    "window_enumeration": {
+      "samples": 10,
+      "p50": 1.97965,
+      "p95": 2.30721,
+      "mean": 2.06093
+    },
+    "window_target_resolution": {
+      "samples": 10,
+      "p50": 2.12305,
+      "p95": 2.21241,
+      "mean": 2.10533
+    },
+    "window_identity_recheck": {
+      "samples": 10,
+      "p50": 0.11705,
+      "p95": 0.13888999999999999,
+      "mean": 0.12159
+    },
+    "known_folder_resolution": {
+      "samples": 10,
+      "p50": 0.0121,
+      "p95": 2.1420250000000025,
+      "mean": 0.4001
+    },
+    "focus_verification": {
+      "samples": 10,
+      "p50": 4.9322,
+      "p95": 17.600655000000007,
+      "mean": 7.418090000000001
+    },
+    "move_verification": {
+      "samples": 10,
+      "p50": 2.0997000000000003,
+      "p95": 3.244460000000001,
+      "mean": 2.25567
+    },
+    "resize_verification": {
+      "samples": 10,
+      "p50": 3.6921,
+      "p95": 6.418620000000001,
+      "mean": 4.2944
+    },
+    "minimize_verification": {
+      "samples": 10,
+      "p50": 0.9313,
+      "p95": 7.412400000000008,
+      "mean": 2.05305
+    },
+    "maximize_verification": {
+      "samples": 10,
+      "p50": 0.54945,
+      "p95": 2.542090000000002,
+      "mean": 0.9267
+    },
+    "restore_verification": {
+      "samples": 10,
+      "p50": 0.5780000000000001,
+      "p95": 0.729,
+      "mean": 0.60896
+    },
+    "full_text_to_verified_result": {
+      "samples": 10,
+      "p50": 5.9079,
+      "p95": 13.020535000000002,
+      "mean": 7.09569
+    },
+    "path_launch_to_unverified_result": {
+      "samples": 10,
+      "p50": 2.2386999999999997,
+      "p95": 2.56303,
+      "mean": 2.31047
+    },
+    "startup": {
+      "samples": 10,
+      "p50": 358.90625,
+      "p95": 534.337255,
+      "mean": 396.30795
+    },
+    "application_launch_to_verified_window": {
+      "samples": 3,
+      "p50": 3570.784,
+      "p95": 3998.58667,
+      "mean": 3628.3041333333335
+    }
+  },
+  "application_launch_verification": "VERIFIED",
+  "path_launch_verification": "UNVERIFIED by contract; timing uses an inert adapter",
+  "resources": {
+    "rss_mib": 60.12890625,
+    "idle_window_seconds": 1.0001972001045942,
+    "idle_cpu_percent_one_core": 0.0,
+    "process_count": 1
+  }
+}

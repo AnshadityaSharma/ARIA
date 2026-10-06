@@ -11,3 +11,6 @@ logs/
 screenshots/
 .aria.toml
 benchmark-*.wav
+*.gguf
+*.onnx
+.aria-runtime/

@@ -1,0 +1,736 @@
+{
+  "version": 1,
+  "split": "development",
+  "cases": [
+    {
+      "id": "dev-001",
+      "family": "direct_open_camera",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open camera",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:camera",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-002",
+      "family": "direct_open_chrome",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open chrome",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:chrome",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-003",
+      "family": "direct_resize",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "make it 10% smaller",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "scale": 0.9
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-004",
+      "family": "direct_move",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "move it to the top right",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "position": "top_right"
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-005",
+      "family": "direct_foreground",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "make this window half the size",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:9",
+            "params": {
+              "scale": 0.5
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-006",
+      "family": "direct_folder",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open downloads",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_PATH",
+            "target": "literal:downloads",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-007",
+      "family": "direct_volume",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "set volume to 42%",
+          "expected": {
+            "outcome": "action",
+            "action": "SET_VOLUME",
+            "target": "none",
+            "params": {
+              "level": 42
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-008",
+      "family": "direct_search",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "search youtube for Daft Punk",
+          "expected": {
+            "outcome": "action",
+            "action": "SEARCH_YOUTUBE",
+            "target": "literal:daft punk",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-009",
+      "family": "direct_delete",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "delete file C:\\Temp\\fixture.txt",
+          "expected": {
+            "outcome": "action",
+            "action": "DELETE_PATH",
+            "target": "literal:c:\\temp\\fixture.txt",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "direct"
+      ]
+    },
+    {
+      "id": "dev-010",
+      "family": "paraphrase_open_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Could you open the camera?",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:camera",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "paraphrase"
+      ]
+    },
+    {
+      "id": "dev-011",
+      "family": "paraphrase_move_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Put it in the upper right.",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "position": "top_right"
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "paraphrase"
+      ]
+    },
+    {
+      "id": "dev-012",
+      "family": "paraphrase_resize_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Make this window about a fifth of the screen.",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:9",
+            "params": {
+              "screen_ratio": 0.2
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "paraphrase"
+      ]
+    },
+    {
+      "id": "dev-013",
+      "family": "indian_open_1",
+      "cohort": "indian_english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Kindly open camera please",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:camera",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "natural_phrasing"
+      ]
+    },
+    {
+      "id": "dev-014",
+      "family": "indian_resize_1",
+      "cohort": "indian_english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Please make this window a little smaller",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:9",
+            "params": {
+              "scale": 0.9
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "natural_phrasing"
+      ]
+    },
+    {
+      "id": "dev-015",
+      "family": "hinglish_open_1",
+      "cohort": "hinglish",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "camera khol do please",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:camera",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "code_switching"
+      ]
+    },
+    {
+      "id": "dev-016",
+      "family": "hinglish_move_1",
+      "cohort": "hinglish",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "is window ko right mein le jao",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:9",
+            "params": {
+              "position": "right"
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "code_switching"
+      ]
+    },
+    {
+      "id": "dev-017",
+      "family": "ambiguous_open_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open that",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "dev-018",
+      "family": "ambiguous_generic_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "do something with the window",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "ambiguous"
+      ]
+    },
+    {
+      "id": "dev-019",
+      "family": "unsupported_email_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "send an email",
+          "expected": {
+            "outcome": "abstain"
+          }
+        }
+      ],
+      "phenomena": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "dev-020",
+      "family": "unsupported_buy_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "buy something",
+          "expected": {
+            "outcome": "abstain"
+          }
+        }
+      ],
+      "phenomena": [
+        "unsupported"
+      ]
+    },
+    {
+      "id": "dev-021",
+      "family": "unsafe_delete_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "delete everything",
+          "expected": {
+            "outcome": "abstain"
+          }
+        }
+      ],
+      "phenomena": [
+        "unsupported",
+        "high_risk_negative"
+      ]
+    },
+    {
+      "id": "dev-022",
+      "family": "compound_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "Open the browser and look up Python decorators.",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "compound"
+      ]
+    },
+    {
+      "id": "dev-023",
+      "family": "missing_context_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": null,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "make it smaller",
+          "expected": {
+            "outcome": "clarify"
+          }
+        }
+      ],
+      "phenomena": [
+        "stateful",
+        "missing_context"
+      ]
+    },
+    {
+      "id": "dev-024",
+      "family": "state_sequence_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": null,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open calculator",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:calculator",
+            "params": {}
+          }
+        },
+        {
+          "text": "make it one fifth of the screen",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "screen_ratio": 0.2
+            }
+          }
+        },
+        {
+          "text": "move it top right",
+          "expected": {
+            "outcome": "action",
+            "action": "MOVE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "position": "top_right"
+            }
+          }
+        },
+        {
+          "text": "make it a little smaller",
+          "expected": {
+            "outcome": "action",
+            "action": "RESIZE_WINDOW",
+            "target": "window:7",
+            "params": {
+              "scale": 0.9
+            }
+          }
+        }
+      ],
+      "phenomena": [
+        "stateful"
+      ]
+    },
+    {
+      "id": "dev-025",
+      "family": "asr_open_1",
+      "cohort": "english",
+      "modality": "asr_transcript",
+      "provenance": "simulated_asr",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "open camra",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:camera",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "asr_error"
+      ]
+    },
+    {
+      "id": "dev-026",
+      "family": "asr_indian_1",
+      "cohort": "indian_english",
+      "modality": "asr_transcript",
+      "provenance": "simulated_asr",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "kindly open the downloads folder",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_PATH",
+            "target": "literal:downloads",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "asr_error"
+      ]
+    },
+    {
+      "id": "dev-027",
+      "family": "asr_hinglish_1",
+      "cohort": "hinglish",
+      "modality": "asr_transcript",
+      "provenance": "simulated_asr",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "chrome kholo",
+          "expected": {
+            "outcome": "action",
+            "action": "OPEN_APPLICATION",
+            "target": "app:chrome",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "asr_error"
+      ]
+    },
+    {
+      "id": "dev-028",
+      "family": "payload_1",
+      "cohort": "english",
+      "modality": "typed",
+      "provenance": "authored",
+      "context": {
+        "tracked_window": 7,
+        "foreground_window": 9
+      },
+      "steps": [
+        {
+          "text": "search youtube for how to delete files",
+          "expected": {
+            "outcome": "action",
+            "action": "SEARCH_YOUTUBE",
+            "target": "literal:how to delete files",
+            "params": {}
+          }
+        }
+      ],
+      "phenomena": [
+        "literal_payload"
+      ]
+    }
+  ]
+}

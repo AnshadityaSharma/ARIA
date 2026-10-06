@@ -7,7 +7,8 @@ The deterministic desktop core is independent of speech recognition.
 Sprint 2 added local voice input. Sprint 3 added a global hotkey, status overlay,
 and action-bound confirmations. Sprint 4 adds a lazy persistent Playwright browser
 for deterministic navigation, search, accessible interaction, YouTube playback, and
-verified downloads. No cloud inference or LLM is used.
+verified downloads. Sprint 5 adds an optional local intent-model fallback; ordinary
+commands remain deterministic. No cloud inference is used.
 
 ## Setup
 
@@ -49,3 +50,25 @@ uv run python -c "from faster_whisper import WhisperModel; WhisperModel('base', 
 
 This provisioning step downloads model weights. Interactive inference uses local
 files only. See `docs/sprint3.md` for validation scope and known limitations.
+
+## Local intent fallback (Sprint 5)
+
+Implementation is available, but **real-model acceptance is blocked on this machine
+by Windows Application Control**. Do not disable protection or execute another
+unapproved runtime. Default ARIA usage does not load or require the intent model.
+See docs/sprint5.md for the approved-runtime prerequisite, separate checksum-pinned
+provisioning instructions, configuration, architecture, test results and limitations.
+
+Provisional model: Qwen2.5-1.5B-Instruct Q4_K_M (1.117 GB), CPU llama.cpp.
+Once a compatible native installation is approved, opt in with --intent-model
+and select it with --intent-runtime. Both text and voice use the same fallback.
+Only a deterministic parse failure invokes the model; output still passes the
+existing Action validator, state resolver, risk metadata and confirmation engine.
+
+Run the regression suite normally without any model download. To reproduce the
+baseline without launching the blocked runtime:
+
+    uv run python scripts/intent_benchmark.py --skip-model
+
+Real-model accuracy, warm/cold latency and loaded memory are not yet measured.
+No Phase 8/9 systems, cloud APIs, tools, training or vision were added.

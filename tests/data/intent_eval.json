@@ -1,0 +1,229 @@
+[
+  {
+    "category": "direct",
+    "text": "open camera",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "direct",
+    "text": "open chrome",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "chrome",
+      "params": {}
+    }
+  },
+  {
+    "category": "direct",
+    "text": "move it right",
+    "expected": {
+      "action": "MOVE_WINDOW",
+      "target": "tracked",
+      "params": {
+        "position": "right"
+      }
+    }
+  },
+  {
+    "category": "direct",
+    "text": "make it smaller",
+    "expected": {
+      "action": "RESIZE_WINDOW",
+      "target": "tracked",
+      "params": {
+        "scale": 0.9
+      }
+    }
+  },
+  {
+    "category": "direct",
+    "text": "open youtube",
+    "expected": {
+      "action": "OPEN_WEBSITE",
+      "target": "youtube",
+      "params": {}
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Could you open the camera?",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "please launch the camera",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "can you bring up the camera",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Make this window about a fifth of the screen.",
+    "expected": {
+      "action": "RESIZE_WINDOW",
+      "target": "foreground",
+      "params": {
+        "screen_ratio": 0.2
+      }
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Put it in the upper right.",
+    "expected": {
+      "action": "MOVE_WINDOW",
+      "target": "tracked",
+      "params": {
+        "position": "top_right"
+      }
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Can you search YouTube for Daft Punk?",
+    "expected": {
+      "action": "SEARCH_YOUTUBE",
+      "target": "Daft Punk",
+      "params": {}
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "put this window in the upper right",
+    "expected": {
+      "action": "MOVE_WINDOW",
+      "target": "foreground",
+      "params": {
+        "position": "top_right"
+      }
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "make this about one fifth of the screen",
+    "expected": {
+      "action": "RESIZE_WINDOW",
+      "target": "foreground",
+      "params": {
+        "screen_ratio": 0.2
+      }
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "shrink this window slightly",
+    "expected": {
+      "action": "RESIZE_WINDOW",
+      "target": "foreground",
+      "params": {
+        "scale": 0.9
+      }
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Make the window slightly smaller.",
+    "expected": {
+      "action": "RESIZE_WINDOW",
+      "target": "foreground",
+      "params": {
+        "scale": 0.9
+      }
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Can you search YouTube for some Daft Punk?",
+    "expected": {
+      "action": "SEARCH_YOUTUBE",
+      "target": "Daft Punk",
+      "params": {}
+    }
+  },
+  {
+    "category": "paraphrase",
+    "text": "Could you kindly open the camera for me?",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "indian_english",
+    "text": "Kindly open camera please",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "hinglish_exploratory",
+    "text": "camera khol do please",
+    "expected": {
+      "action": "OPEN_APPLICATION",
+      "target": "camera",
+      "params": {}
+    }
+  },
+  {
+    "category": "ambiguous",
+    "text": "make it nice",
+    "expected": null
+  },
+  {
+    "category": "ambiguous",
+    "text": "do something with the window",
+    "expected": null
+  },
+  {
+    "category": "ambiguous",
+    "text": "open that",
+    "expected": null
+  },
+  {
+    "category": "unsupported",
+    "text": "send an email",
+    "expected": null
+  },
+  {
+    "category": "unsupported",
+    "text": "buy something",
+    "expected": null
+  },
+  {
+    "category": "unsupported",
+    "text": "delete everything",
+    "expected": null
+  },
+  {
+    "category": "unsupported",
+    "text": "run this command",
+    "expected": null
+  },
+  {
+    "category": "compound",
+    "text": "Open the browser and look up Python decorators.",
+    "expected": null
+  }
+]

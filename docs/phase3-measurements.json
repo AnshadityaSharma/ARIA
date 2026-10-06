@@ -1,0 +1,133 @@
+{
+  "phase": 3,
+  "method": "Single-process warm samples use perf_counter_ns and linear-interpolated p50/p95; cold interpretation is the first call; startup uses fresh subprocesses. Dynamic application matching and state resolution use inert discovered records and stable fake windows.",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "windows_release": "11",
+    "windows_build": "10.0.26200",
+    "python": "3.12.10",
+    "processor": "Intel64 Family 6 Model 165 Stepping 2, GenuineIntel",
+    "logical_cpus": 16,
+    "physical_memory_gib": 31.750675201416016
+  },
+  "sample_counts": {
+    "warm": 2000,
+    "startup": 10,
+    "cold": 1
+  },
+  "cold_interpretation_ms": 2.3823,
+  "timing_ms": {
+    "normalization": {
+      "samples": 2000,
+      "p50": 0.0133,
+      "p95": 0.028814999999999986,
+      "mean": 0.015610049999999999
+    },
+    "grammar_direct": {
+      "samples": 2000,
+      "p50": 0.0436,
+      "p95": 0.1395,
+      "mean": 0.06529125000000001
+    },
+    "grammar_paraphrase": {
+      "samples": 2000,
+      "p50": 0.0512,
+      "p95": 0.08966999999999993,
+      "mean": 0.057692549999999995
+    },
+    "grammar_hinglish": {
+      "samples": 2000,
+      "p50": 0.0412,
+      "p95": 0.08460999999999999,
+      "mean": 0.0479627
+    },
+    "parameter_numeric_conversion": {
+      "samples": 2000,
+      "p50": 0.0005,
+      "p95": 0.0005,
+      "mean": 0.0004962500000000001
+    },
+    "parameter_command_parse": {
+      "samples": 2000,
+      "p50": 0.0632,
+      "p95": 0.12482999999999997,
+      "mean": 0.07443465
+    },
+    "state_reference_resolution": {
+      "samples": 2000,
+      "p50": 0.0003,
+      "p95": 0.0004,
+      "mean": 0.00031685
+    },
+    "application_exact_resolution": {
+      "samples": 2000,
+      "p50": 0.0015,
+      "p95": 0.0016,
+      "mean": 0.0015383
+    },
+    "application_compact_resolution": {
+      "samples": 2000,
+      "p50": 0.0066,
+      "p95": 0.009104999999999995,
+      "mean": 0.0077632000000000005
+    },
+    "application_typo_resolution": {
+      "samples": 2000,
+      "p50": 0.0146,
+      "p95": 0.0189,
+      "mean": 0.016221
+    },
+    "full_interpretation_direct": {
+      "samples": 2000,
+      "p50": 0.0484,
+      "p95": 0.08191999999999998,
+      "mean": 0.054671
+    },
+    "full_interpretation_paraphrase": {
+      "samples": 2000,
+      "p50": 0.0511,
+      "p95": 0.08554499999999997,
+      "mean": 0.0563336
+    },
+    "full_interpretation_hinglish": {
+      "samples": 2000,
+      "p50": 0.0415,
+      "p95": 0.06680499999999999,
+      "mean": 0.0451674
+    },
+    "clarification": {
+      "samples": 2000,
+      "p50": 0.0164,
+      "p95": 0.03270999999999999,
+      "mean": 0.019369900000000002
+    },
+    "abstention": {
+      "samples": 2000,
+      "p50": 0.0138,
+      "p95": 0.021204999999999995,
+      "mean": 0.0159633
+    },
+    "fresh_process_startup_and_interpretation": {
+      "samples": 10,
+      "p50": 167.77724999999998,
+      "p95": 195.496045,
+      "mean": 172.63979
+    }
+  },
+  "objectives_ms": {
+    "warm_interpretation_p50": 0.05,
+    "warm_interpretation_p95": 0.1,
+    "status": "proposed diagnostic objectives, not guaranteed facts"
+  },
+  "resources": {
+    "rss_mib": 31.3046875,
+    "idle_window_seconds": 1.0003502999898046,
+    "idle_cpu_percent_one_core": 0.0,
+    "process_count": 1,
+    "aria_source_bytes": 136104,
+    "pyproject_bytes": 840,
+    "lockfile_bytes": 69699,
+    "pyproject_sha256": "a165fb5d0139957ed76b5e8b7dbb06e83e6fec2bb8faade586c1c8af0991ad6a",
+    "lockfile_sha256": "82c106ed5d3f044d601ed63531d4237f8f106fd2ccae80f51793bae39b28398c"
+  }
+}

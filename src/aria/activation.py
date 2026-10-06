@@ -124,6 +124,7 @@ class ActivationController:
 
     def close(self):
         self.closed = True
+        self.engine.cancel_intent()
         if self.prompt:
             self.prompt.respond("cancelled")
         self.engine.cancel()

@@ -38,6 +38,9 @@ class Timeline:
             ("browser_interaction_ms", "browser_interaction_start", "browser_interaction_complete"),
             ("browser_download_ms", "browser_download_start", "browser_download_complete"),
             ("youtube_result_to_playback_ms", "youtube_result_selection_start", "youtube_playback_ready"),
+            ("model_load_ms", "model_load_start", "model_load_complete"),
+            ("model_latency_ms", "model_start", "model_complete"),
+            ("model_timeout_ms", "model_start", "model_timeout"),
         ):
             if start in self.events and end in self.events:
                 result[label] = round((self.events[end]-self.events[start])*1000, 3)
@@ -117,6 +120,12 @@ class VoiceController:
         line.mark("asr_start", self.clock())
         transcript=self.asr.transcribe(audio); line.mark("transcription_complete", self.clock())
         if transcript.confidence<self.min_confidence: raise LowConfidence(f"Uncertain transcription ({transcript.confidence:.0%}): {transcript.text}")
-        command=normalize(transcript.text); action=parse(command); line.mark("command_parse", self.clock())
+        command=normalize(transcript.text)
+        if hasattr(self.engine, "interpret"):
+            action=self.engine.interpret(command, original_text=transcript.text,
+                                         on_event=lambda name: line.mark(name, self.clock()))
+        else:
+            action=parse(command)
+        line.mark("command_parse", self.clock())
         line.events["parse_complete"] = line.command_parse
         return transcript,action,line

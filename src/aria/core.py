@@ -6,6 +6,7 @@ from typing import Any
 from types import MappingProxyType
 from collections.abc import Mapping
 import math
+import time
 
 
 class ActionType(StrEnum):
@@ -45,6 +46,13 @@ class Risk(StrEnum):
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
+
+
+class Verification(StrEnum):
+    """How much of an executor's claimed effect was independently observed."""
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
+    FAILED = "FAILED"
 
 
 RISK = MappingProxyType({
@@ -170,11 +178,23 @@ class WindowState:
     geometry: Rect | None = None
     previous_geometry: Rect | None = None
     last_action: ActionType | None = None
+    identity: object | None = None
+    executable: str | None = None
+    application_id: str | None = None
+    placement: str | None = None
+    updated_at: float | None = None
+    verified: bool = True
 
-    def update(self, handle: int, title: str, geometry: Rect, action: ActionType | None = None) -> None:
+    def update(self, handle: int, title: str, geometry: Rect, action: ActionType | None = None,
+               *, identity=None, executable=None, application_id=None, placement=None,
+               now: float | None = None, verified: bool = True) -> None:
         if self.handle != handle: self.previous_geometry = None
         if self.handle == handle and self.geometry != geometry: self.previous_geometry = self.geometry
         self.handle, self.title, self.geometry = handle, title, geometry
+        self.identity, self.executable, self.application_id = identity, executable, application_id
+        self.placement = str(placement) if placement is not None else self.placement
+        self.updated_at = time.monotonic() if now is None else now
+        self.verified = verified
         if action is not None: self.last_action = action
 
 
@@ -183,3 +203,13 @@ class Result:
     ok: bool
     message: str
     data: dict[str, Any] = field(default_factory=dict)
+    observed: bool = False
+    verification: Verification = Verification.UNVERIFIED
+
+    def __post_init__(self):
+        if type(self.ok) is not bool or not isinstance(self.message, str) or not isinstance(self.data, dict):
+            raise ValueError("Invalid executor result")
+        if not isinstance(self.verification, Verification) or type(self.observed) is not bool:
+            raise ValueError("Invalid verification result")
+        if self.verification == Verification.VERIFIED and (not self.ok or not self.observed):
+            raise ValueError("Verification requires an observed successful execution")

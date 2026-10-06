@@ -90,3 +90,43 @@ browser launch, two YouTube navigations, result discovery, selection, and playba
 verification. Repeated runs varied because ads/media delivery sometimes left the
 correct watch page paused; the external smoke reports that condition separately. The
 successful observation is not a stable latency target.
+
+## Sprint 5 baseline — 2026-09-23
+
+Command: python scripts/intent_benchmark.py --skip-model --output
+logs/intent-fast-path-baseline.json. Windows 11 build 26200, Python 3.12.10,
+Intel i7-10875H, 16 logical CPUs. The script never starts the native runtime in this
+mode. Process RSS includes the benchmark's Python imports, excludes Whisper/browser,
+and is a sample rather than peak usage.
+
+| Measurement | Observed |
+| --- | ---: |
+| Engine plus interpreter/config construction | 0.085 ms |
+| Before model load | 1 process; 31.434 MiB RSS |
+| Idle CPU, one-second sample | 0.0% |
+| Simple-command interpretation, median of 1,000 | 0.0262 ms |
+| Simple-command model invocations | 0 |
+| Unmodified deterministic parser corpus accuracy | 10/27 (37.04%) |
+| After controlled-adapter evaluation | 1 process; 35.551 MiB RSS |
+
+The corpus intentionally emphasizes unsupported paraphrases and rejections; 37.04%
+is not an estimate of ordinary-command accuracy. All five direct corpus commands
+were correctly parsed. The guarded deterministic-only path correctly rejects
+ambiguous/unsupported inputs that the old generic open/delete patterns would accept.
+
+Sprint 4 recorded 0.058 ms construction and 30.53 MiB without Chromium; the roughly
+0.9 MiB difference here includes measurement/import differences and is not a controlled
+attribution to intent code. Both runs have zero resident intent-model processes.
+The 0.0262 ms number is interpretation only, excluding actions and microphone/ASR.
+
+The initial real-model attempt is recorded separately in logs/intent-baseline.json:
+status blocked. Windows Application Control rejects llama-server-impl.dll with
+WinError 4551. No model response was generated. **Model load time, cold/warm latency,
+loaded RSS/CPU, token counts, intent accuracy, schema-valid rate, invalid-output
+rate, unsupported-action rate and real fallback rate are unavailable, not zero.**
+
+The benchmark is ready to measure these after an approved runtime is supplied.
+It uses a fixed development corpus and controlled executor adapters; no unattended
+real actions are performed. Runtime failures stop evaluation instead of polluting
+quality denominators. Raw generated reports are ignored by Git. No native runtime
+replacement or Windows security bypass is authorized. See sprint5.md.

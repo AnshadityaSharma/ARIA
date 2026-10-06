@@ -1,83 +1,209 @@
+
 from __future__ import annotations
 
 import re
-from pathlib import Path
+import unicodedata
+from dataclasses import dataclass
 
 from aria.core import Action, ActionType
 
 
-class ParseError(ValueError):
-    pass
+class ParseError(ValueError): pass
+class ClarificationRequired(ParseError, LookupError): pass
+class UnsupportedCommand(ParseError): pass
+class MalformedCommand(ParseError): pass
 
 
-def parse(text: str) -> Action:
-    # Preserve path punctuation and case before normalizing command grammar.
-    if m := re.fullmatch(r'delete(?: file)?\s+(.+)', text.strip(), re.IGNORECASE):
-        return Action(ActionType.DELETE_PATH, m.group(1).strip().strip('"')).validate()
-    if m := re.fullmatch(r'(move|copy|rename) file\s+(.+?)\s+to\s+(.+)', text.strip(), re.IGNORECASE):
-        kind = {"move": ActionType.MOVE_PATH, "copy": ActionType.COPY_PATH, "rename": ActionType.RENAME_PATH}[m.group(1).lower()]
-        return Action(kind, m.group(2).strip().strip('"'), {"destination": m.group(3).strip().strip('"')}).validate()
-    raw = " ".join(text.strip().lower().split())
-    if raw in {"shutdown", "shut down", "shut down computer"}:
-        return Action(ActionType.SHUTDOWN)
-    if not raw:
-        raise ParseError("Command is empty")
-    if raw in {"open browser", "start browser"}:
-        return Action(ActionType.OPEN_BROWSER)
-    if m := re.fullmatch(r"(?:open|go to|navigate to) ((?:https?://)?[^ ]+\.[^ ]+)", raw):
-        kind = ActionType.OPEN_WEBSITE if raw.startswith("open ") else ActionType.NAVIGATE_BROWSER
-        return Action(kind, m.group(1)).validate()
-    if m := re.fullmatch(r"open (youtube|google|github)", raw):
-        return Action(ActionType.OPEN_WEBSITE, m.group(1)).validate()
-    if m := re.fullmatch(r"search (?:the )?web for (.+)", raw):
-        return Action(ActionType.SEARCH_WEB, m.group(1)).validate()
-    if m := re.fullmatch(r"search youtube for (.+)", raw):
-        return Action(ActionType.SEARCH_YOUTUBE, m.group(1)).validate()
-    if m := re.fullmatch(r"play (.+?)(?: on youtube)?", raw):
-        return Action(ActionType.PLAY_YOUTUBE, m.group(1)).validate()
-    if m := re.fullmatch(r"type (.+?) (?:in|into) (.+)", raw):
-        return Action(ActionType.TYPE_IN_BROWSER, m.group(2), {"text": m.group(1)}).validate()
-    if m := re.fullmatch(r"click (?:(button|link|checkbox|radio|menuitem|tab) )?(.+)", raw):
-        return Action(ActionType.CLICK_BROWSER_ELEMENT, m.group(2), {"role": m.group(1) or "button"}).validate()
-    if m := re.fullmatch(r"submit(?: (.+))?", raw):
-        return Action(ActionType.SUBMIT_BROWSER, m.group(1) or "submit", {"role": "button"}).validate()
-    if m := re.fullmatch(r"download (.+)", raw):
-        return Action(ActionType.DOWNLOAD_FILE, m.group(1)).validate()
-    if m := re.fullmatch(r"open (?:application |app )?(.+)", raw):
-        target = m.group(1)
-        if target in {"desktop", "documents", "downloads", "videos", "pictures"} or "\\" in target or ":/" in target:
-            return Action(ActionType.OPEN_PATH, target)
-        return Action(ActionType.OPEN_APPLICATION, target).validate()
-    if m := re.fullmatch(r"(?:focus|switch to) (.+)", raw):
-        return Action(ActionType.FOCUS_WINDOW, m.group(1))
+@dataclass(frozen=True, slots=True)
+class Token:
+    control: str
+    start: int
+    end: int
+
+
+@dataclass(frozen=True, slots=True)
+class NormalizedCommand:
+    source: str
+    surface: str
+    control: str
+    tokens: tuple[Token, ...]
+
+
+POLITE_PREFIX = re.compile(
+    r"^(?:(?:please|kindly)\s+|(?:(?:could|can|would|will)\s+you)\s+)+", re.I)
+POLITE_SUFFIX = r"(?:\s+(?:please|for me|once))?"
+
+
+def normalize_command(text: str) -> NormalizedCommand:
+    if not isinstance(text, str) or not text.strip() or len(text) > 1024:
+        raise MalformedCommand("Provide one short, explicit computer command.")
+    if any(ord(character) < 32 for character in text):
+        raise MalformedCommand("Control characters are not accepted in commands.")
+    source = unicodedata.normalize("NFKC", text).strip()
+    surface = source
+    if not re.search(r'[\\/:"?]', surface.rstrip(".!?")):
+        surface = surface.rstrip(".!?")
+    surface = POLITE_PREFIX.sub("", surface).strip()
+    tokens = tuple(Token(match.group(0).casefold(), match.start(), match.end())
+                   for match in re.finditer(r"\S+", surface))
+    return NormalizedCommand(source, surface, " ".join(t.control for t in tokens), tokens)
+
+
+NUMBER_WORDS = {
+    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+    "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+    "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40,
+    "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80,
+    "ninety": 90, "hundred": 100,
+}
+ONES = "one|two|three|four|five|six|seven|eight|nine"
+NUMBER = rf"(?:\d+|zero|{ONES}|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|(?:twenty|thirty)(?:[- ](?:{ONES}))?|forty|fifty|sixty|seventy|eighty|ninety|hundred)"
+
+
+def _number(value: str) -> int:
+    value = value.casefold().replace("-", " ").strip()
+    if value.isdigit(): return int(value)
+    parts = value.split()
+    if len(parts) == 1 and parts[0] in NUMBER_WORDS: return NUMBER_WORDS[parts[0]]
+    if len(parts) == 2:
+        first, second = NUMBER_WORDS.get(parts[0]), NUMBER_WORDS.get(parts[1])
+        if first in range(20, 100, 10) and second in range(1, 10): return first + second
+    raise ParseError(f"Unsupported number: {value!r}")
+
+
+DIRECTIONS = {
+    "upper right": "top_right", "top right": "top_right",
+    "upper left": "top_left", "top left": "top_left",
+    "lower right": "bottom_right", "bottom right": "bottom_right",
+    "lower left": "bottom_left", "bottom left": "bottom_left",
+    "top": "top", "bottom": "bottom", "center": "center",
+    "right": "right", "left": "left", "up": "up", "down": "down",
+}
+DIRECTION = "|".join(sorted((re.escape(x) for x in DIRECTIONS), key=len, reverse=True))
+REFERENCE = r"it|that(?: window)?|this window|the window|(?:the )?current window|(?:the )?active window"
+
+
+def _reference(value: str) -> str:
+    key = " ".join(value.casefold().split())
+    return "foreground" if key in {"this window", "the window", "current window", "the current window", "active window", "the active window"} else "tracked"
+
+
+def _trim_target(value: str) -> str:
+    value = value.strip().strip('"')
+    value = re.sub(r"^the\s+", "", value, flags=re.I)
+    return re.sub(r"\s+(?:please|for me|once)$", "", value, flags=re.I).strip()
+
+
+def _known_folder(value: str) -> str | None:
+    key = re.sub(r"\s+folder$", "", value.casefold().strip())
+    return {"desktop": "desktop", "document": "documents", "documents": "documents",
+            "download": "downloads", "downloads": "downloads", "picture": "pictures",
+            "pictures": "pictures", "video": "videos", "videos": "videos"}.get(key)
+
+
+def _literal_command(control: str) -> bool:
+    return bool(re.match(r"^(?:search (?:the )?web for|search youtube for|type |play |download )", control))
+
+
+def guard(command: NormalizedCommand) -> None:
+    control = command.control
+    if "<|" in command.source:
+        raise MalformedCommand("Model control delimiters are not accepted in commands.")
+    if _literal_command(control): return
+    if re.search(r"\b(?:do not|don't|dont|never|no need to)\b", control):
+        raise UnsupportedCommand("The command is negated; nothing was proposed.")
+    if re.search(r"\b(?:and|then)\s+(?:then\s+)?(?:open|launch|start|look|search|move|put|place|make|resize|delete|remove|run|click|type|play|maximize|minimize|restore)\b", control):
+        raise ClarificationRequired("Please give one action at a time; split that request into separate commands.")
+    if re.search(r"\b(?:delete|remove|erase)\s+(?:it|that|everything|all)\b", control):
+        raise UnsupportedCommand("Specify exactly one file or folder to delete.")
+    if re.fullmatch(r"open\s+(?:that|it|this|something)", control):
+        raise ClarificationRequired("Name the application, file, or website to open.")
+    if re.match(r"^(?:do something|(?:move|shift) (?:the )?(?:thing|object))\b", control):
+        raise ClarificationRequired("Specify the action, target, and required direction or size.")
+    if re.match(r"^(?:send\s+(?:an?\s+)?(?:email|message)|buy\b|pay\b|run\s+(?:this\s+)?(?:command|code|script)|execute\s+(?:code|script))", control):
+        raise UnsupportedCommand("That request is outside the supported computer capabilities.")
+
+
+def _file_action(surface: str) -> Action | None:
+    if match := re.fullmatch(r'delete(?: file)?\s+(.+)', surface, re.I):
+        return Action(ActionType.DELETE_PATH, match.group(1).strip().strip('"')).validate()
+    if match := re.fullmatch(r'(move|copy|rename) file\s+(.+?)\s+to\s+(.+)', surface, re.I):
+        kind = {"move": ActionType.MOVE_PATH, "copy": ActionType.COPY_PATH,
+                "rename": ActionType.RENAME_PATH}[match.group(1).casefold()]
+        return Action(kind, match.group(2).strip().strip('"'),
+                      {"destination": match.group(3).strip().strip('"')}).validate()
+    return None
+
+
+def parse(text: str, *, on_event=None) -> Action:
+    event = on_event or (lambda _name: None)
+    event("normalization_start"); command = normalize_command(text); event("normalization_complete")
+    guard(command); surface, control = command.surface, command.control
+    event("grammar_start")
+    def done(action: Action) -> Action:
+        event("grammar_complete"); return action.validate()
+
+    if action := _file_action(surface): return done(action)
+    if control in {"shutdown", "shut down", "shut down computer"}: return done(Action(ActionType.SHUTDOWN))
+    if control in {"open browser", "start browser", "launch browser"}: return done(Action(ActionType.OPEN_BROWSER))
+    if m := re.fullmatch(r"(?:open|go to|navigate to)\s+((?:https?://)?[^ ]+\.[^ ]+)", surface, re.I):
+        kind = ActionType.OPEN_WEBSITE if control.startswith("open ") else ActionType.NAVIGATE_BROWSER
+        return done(Action(kind, m.group(1)))
+    if m := re.fullmatch(r"open\s+(youtube|google|github)", surface, re.I): return done(Action(ActionType.OPEN_WEBSITE, m.group(1)))
+    if m := re.fullmatch(r"search\s+(?:the\s+)?web\s+for\s+(.+)", surface, re.I): return done(Action(ActionType.SEARCH_WEB, m.group(1)))
+    if m := re.fullmatch(r"search\s+youtube\s+for\s+(.+)", surface, re.I): return done(Action(ActionType.SEARCH_YOUTUBE, m.group(1)))
+    if m := re.fullmatch(r"play\s+(.+?)(?:\s+on\s+youtube)?", surface, re.I): return done(Action(ActionType.PLAY_YOUTUBE, m.group(1)))
+    if m := re.fullmatch(r"type\s+(.+?)\s+(?:in|into)\s+(.+)", surface, re.I): return done(Action(ActionType.TYPE_IN_BROWSER, m.group(2), {"text": m.group(1)}))
+    if m := re.fullmatch(r"click\s+(?:(button|link|checkbox|radio|menuitem|tab)\s+)?(.+)", surface, re.I): return done(Action(ActionType.CLICK_BROWSER_ELEMENT, m.group(2), {"role": m.group(1) or "button"}))
+    if m := re.fullmatch(r"submit(?:\s+(.+))?", surface, re.I): return done(Action(ActionType.SUBMIT_BROWSER, m.group(1) or "submit", {"role": "button"}))
+    if m := re.fullmatch(r"download\s+(.+)", surface, re.I): return done(Action(ActionType.DOWNLOAD_FILE, m.group(1)))
+
+    if m := re.fullmatch(r"(.+?)\s+(?:kholo|kholna|khol\s+do)(?:\s+please)?", surface, re.I):
+        return done(Action(ActionType.OPEN_APPLICATION, _trim_target(m.group(1))))
+    if re.fullmatch(r"(?:isko|usko)\s+(?:thoda\s+)?chhota\s+karo", control): return done(Action(ActionType.RESIZE_WINDOW, "tracked", {"scale": .9}))
+    if re.fullmatch(r"(?:isko|usko)\s+(?:thoda\s+)?bada\s+karo", control): return done(Action(ActionType.RESIZE_WINDOW, "tracked", {"scale": 1.1}))
+    if m := re.fullmatch(fr"is window ko\s+({DIRECTION})\s+mein\s+le jao", control): return done(Action(ActionType.MOVE_WINDOW, "foreground", {"position": DIRECTIONS[m.group(1)]}))
+
+    if m := re.fullmatch(fr"(?:open|launch|start|bring up)\s+(.+?){POLITE_SUFFIX}", surface, re.I):
+        target = _trim_target(m.group(1)); folder = _known_folder(target)
+        if folder: return done(Action(ActionType.OPEN_PATH, folder))
+        if "\\" in target or ":/" in target: return done(Action(ActionType.OPEN_PATH, target))
+        return done(Action(ActionType.OPEN_APPLICATION, target))
+    if m := re.fullmatch(r"(?:focus|switch to)\s+(.+)", surface, re.I): return done(Action(ActionType.FOCUS_WINDOW, _trim_target(m.group(1))))
     for verb, kind in (("minimize", ActionType.MINIMIZE_WINDOW), ("maximize", ActionType.MAXIMIZE_WINDOW), ("restore", ActionType.RESTORE_WINDOW)):
-        if m := re.fullmatch(fr"{verb}(?: (.+))?", raw):
-            return Action(kind, m.group(1) or "tracked")
-    ref = r"(it|that|this window)"
-    if m := re.fullmatch(fr"make {ref} (?:(\d+)% |a little |slightly )?(smaller|bigger)", raw):
-        amount = int(m.group(2) or 10) / 100
-        return Action(ActionType.RESIZE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", {"scale": 1-amount if m.group(3) == "smaller" else 1+amount}).validate()
-    if m := re.fullmatch(fr"make {ref} (?:one[- ]fifth|20%)(?: of the screen)?", raw):
-        return Action(ActionType.RESIZE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", {"screen_ratio": .2}).validate()
-    if m := re.fullmatch(fr"make {ref} half (?:the |its )?size", raw):
-        return Action(ActionType.RESIZE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", {"scale": .5}).validate()
-    if m := re.fullmatch(r"resize (.+?) (\d+)%", raw):
-        return Action(ActionType.RESIZE_WINDOW, m.group(1), {"screen_ratio": int(m.group(2)) / 100}).validate()
-    if m := re.fullmatch(fr"move {ref}(?: (\d+) pixels?)?(?: slightly)?(?: to the)? (top right|top left|bottom right|bottom left|top|bottom|center|right|left|up|down)", raw):
-        params = {"position": m.group(3).replace(" ", "_")}
-        if m.group(2): params["pixels"] = int(m.group(2))
-        return Action(ActionType.MOVE_WINDOW, "foreground" if m.group(1) == "this window" else "tracked", params)
-    if m := re.fullmatch(r"move (.+?)(?: to)? (top right|top left|bottom right|bottom left|center)", raw):
-        return Action(ActionType.MOVE_WINDOW, m.group(1), {"position": m.group(2).replace(" ", "_")})
-    if m := re.fullmatch(r"create folder (?:called )?(.+?)(?: (?:in|on) (desktop|documents|downloads|videos|pictures))?", raw):
-        return Action(ActionType.CREATE_FOLDER, m.group(2) or "desktop", {"name": m.group(1)})
-    if raw in {"take screenshot", "take a screenshot"}:
-        return Action(ActionType.TAKE_SCREENSHOT)
-    if m := re.fullmatch(r"set volume (?:to )?(\d+)%?", raw):
-        return Action(ActionType.SET_VOLUME, params={"level": int(m.group(1))})
-    if m := re.fullmatch(r"(?:increase|decrease|raise|lower) volume(?: by)? (\d+)%?", raw):
-        sign = -1 if raw.startswith(("decrease", "lower")) else 1
-        return Action(ActionType.CHANGE_VOLUME, params={"delta": sign * int(m.group(1))})
-    if raw in {"mute", "mute volume"}: return Action(ActionType.MUTE)
-    if raw in {"unmute", "unmute volume"}: return Action(ActionType.UNMUTE)
-    raise ParseError(f"Unsupported or ambiguous command: {text!r}")
+        if m := re.fullmatch(fr"{verb}(?:\s+(.+?))?{POLITE_SUFFIX}", surface, re.I):
+            target = _trim_target(m.group(1)) if m.group(1) else "tracked"
+            if re.fullmatch(REFERENCE, target, re.I): target = _reference(target)
+            return done(Action(kind, target))
+
+    if m := re.fullmatch(fr"make\s+({REFERENCE})\s+(?:about\s+)?(?:one[- ]fifth|a fifth|20%)(?:\s+of\s+the\s+screen)?{POLITE_SUFFIX}", surface, re.I):
+        return done(Action(ActionType.RESIZE_WINDOW, _reference(m.group(1)), {"screen_ratio": .2}))
+    if m := re.fullmatch(fr"make\s+({REFERENCE})\s+half\s+(?:the\s+|its\s+)?size{POLITE_SUFFIX}", surface, re.I):
+        return done(Action(ActionType.RESIZE_WINDOW, _reference(m.group(1)), {"scale": .5}))
+    if m := re.fullmatch(fr"make\s+({REFERENCE})\s+(?:(?:{NUMBER})\s*(?:%|percent)\s+|a little\s+|slightly\s+)?(smaller|bigger|larger){POLITE_SUFFIX}", surface, re.I):
+        amount_match = re.search(fr"({NUMBER})\s*(?:%|percent)", m.group(0), re.I)
+        amount = _number(amount_match.group(1)) / 100 if amount_match else .1
+        scale = 1 - amount if m.group(2).casefold() == "smaller" else 1 + amount
+        return done(Action(ActionType.RESIZE_WINDOW, _reference(m.group(1)), {"scale": scale}))
+    if m := re.fullmatch(fr"(?:shrink|reduce)\s+({REFERENCE})(?:\s+(?:a little|slightly))?{POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.RESIZE_WINDOW, _reference(m.group(1)), {"scale": .9}))
+    if m := re.fullmatch(fr"(?:enlarge|grow)\s+({REFERENCE})(?:\s+(?:a little|slightly))?{POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.RESIZE_WINDOW, _reference(m.group(1)), {"scale": 1.1}))
+    if m := re.fullmatch(fr"resize\s+(.+?)\s+({NUMBER})\s*(?:%|percent){POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.RESIZE_WINDOW, _trim_target(m.group(1)), {"screen_ratio": _number(m.group(2)) / 100}))
+
+    if m := re.fullmatch(fr"(?:move|put|place)\s+({REFERENCE})(?:\s+({NUMBER})\s+pixels?)?(?:\s+slightly)?(?:\s+(?:to|in|at))?(?:\s+the)?\s+({DIRECTION}){POLITE_SUFFIX}", surface, re.I):
+        params = {"position": DIRECTIONS[m.group(3).casefold()]}
+        if m.group(2): params["pixels"] = _number(m.group(2))
+        return done(Action(ActionType.MOVE_WINDOW, _reference(m.group(1)), params))
+    if m := re.fullmatch(fr"move\s+(.+?)(?:\s+to)?(?:\s+the)?\s+({DIRECTION}){POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.MOVE_WINDOW, _trim_target(m.group(1)), {"position": DIRECTIONS[m.group(2).casefold()]}))
+
+    if m := re.fullmatch(r"create folder (?:called )?(.+?)(?: (?:in|on) (desktop|documents|downloads|videos|pictures))?", control): return done(Action(ActionType.CREATE_FOLDER, m.group(2) or "desktop", {"name": m.group(1)}))
+    if control in {"take screenshot", "take a screenshot"}: return done(Action(ActionType.TAKE_SCREENSHOT))
+    if m := re.fullmatch(fr"set volume (?:to )?({NUMBER})\s*(?:%|percent)?{POLITE_SUFFIX}", surface, re.I): return done(Action(ActionType.SET_VOLUME, params={"level": _number(m.group(1))}))
+    if m := re.fullmatch(fr"(?:increase|decrease|raise|lower|reduce) volume(?: by)?\s+({NUMBER})\s*(?:%|percent)?{POLITE_SUFFIX}", surface, re.I):
+        sign = -1 if m.group(0).casefold().startswith(("decrease", "lower", "reduce")) else 1
+        return done(Action(ActionType.CHANGE_VOLUME, params={"delta": sign * _number(m.group(1))}))
+    if control in {"mute", "mute volume"}: return done(Action(ActionType.MUTE))
+    if control in {"unmute", "unmute volume"}: return done(Action(ActionType.UNMUTE))
+    event("grammar_complete")
+    raise UnsupportedCommand(f"Unsupported or ambiguous command: {text!r}")

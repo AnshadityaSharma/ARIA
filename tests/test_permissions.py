@@ -11,8 +11,8 @@ from aria.parser import parse
 def make_engine(tmp_path, clock=None, **policy):
     from aria.desktop import Files
     files = Files()
-    files.delete = Mock()
-    files.move = Mock(return_value=tmp_path / "moved.txt")
+    files.delete = Mock(side_effect=lambda value: __import__("pathlib").Path(value).unlink())
+    files.move = Mock(side_effect=lambda source, destination: __import__("pathlib").Path(source).rename(destination))
     engine = Engine(files=files, volume=Mock(), shutdown=Mock(),
                     permissions=PermissionEngine(clock=clock or __import__("time").monotonic, **policy))
     return engine
@@ -183,9 +183,12 @@ def test_confirmation_events_are_in_execution_order(tmp_path):
     events = []
     with pytest.raises(ConfirmationRequired) as caught:
         engine.execute(Action(T.SHUTDOWN), on_event=events.append)
-    assert events == ["risk_decision"]
+    assert events == ["validation_start", "validation_complete", "risk_start", "risk_decision"]
     engine.confirm(caught.value.pending.token, on_event=events.append)
-    assert events == ["risk_decision", "action_start", "action_complete"]
+    assert events == ["validation_start", "validation_complete", "risk_start", "risk_decision",
+                      "validation_start", "validation_complete", "risk_start", "risk_decision",
+                      "target_recheck_start", "target_recheck_complete", "execution_start", "action_start",
+                      "action_complete", "execution_complete", "verification_start", "verification_complete"]
 
 
 def test_parser_has_no_execution_side_effects(tmp_path):
