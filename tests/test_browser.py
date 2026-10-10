@@ -64,7 +64,10 @@ def test_url_validation_rejects_unsafe_or_invalid_values(value):
 
 def test_browser_is_strictly_lazy_for_desktop_actions():
     factory = Mock()
-    engine = Engine(volume=Mock(), browser_factory=factory)
+    from aria.desktop import AudioState
+    volume = Mock()
+    volume.mute.return_value = AudioState(40, True, "fixture-endpoint")
+    engine = Engine(volume=volume, browser_factory=factory)
     engine.execute(Action(T.MUTE))
     factory.assert_not_called()
     assert engine.browser_state is None

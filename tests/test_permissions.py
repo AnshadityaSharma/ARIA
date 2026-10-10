@@ -6,6 +6,7 @@ from aria.core import Action, ActionType as T, RISK, Risk
 from aria.engine import Engine
 from aria.permissions import ConfirmationRequired, Decision, PermissionDenied, PermissionEngine
 from aria.parser import parse
+from aria.desktop import AudioState
 
 
 def make_engine(tmp_path, clock=None, **policy):
@@ -13,7 +14,9 @@ def make_engine(tmp_path, clock=None, **policy):
     files = Files()
     files.delete = Mock(side_effect=lambda value: __import__("pathlib").Path(value).unlink())
     files.move = Mock(side_effect=lambda source, destination: __import__("pathlib").Path(source).rename(destination))
-    engine = Engine(files=files, volume=Mock(), shutdown=Mock(),
+    volume = Mock()
+    volume.mute.return_value = AudioState(40, True, "fixture-endpoint")
+    engine = Engine(files=files, volume=volume, shutdown=Mock(),
                     permissions=PermissionEngine(clock=clock or __import__("time").monotonic, **policy))
     return engine
 

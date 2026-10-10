@@ -4,6 +4,8 @@ Run `python scripts/voice_benchmark.py <audio.wav>` after the local model is cac
 
 Results are machine- and microphone-specific. Do not treat committed measurements as guarantees.
 
+The historical voice figures below use synthetic speech or small smoke checks. They do not establish real-human WER, command correctness, partial-transcript latency, microphone robustness, or Phase 6 acceptance. `src/aria/voice.py` currently returns a final transcript after capture, so first-partial latency is unavailable until a real partial path is implemented and measured. The planned representative real-audio protocol, error attribution and model-change gate are in [evaluation-contract.md](evaluation-contract.md); the requirement/scenario audit is in [roadmap-audit.md](roadmap-audit.md). Record CPU/RAM/process impact, cold/warm p50/p95, sample count, hardware and simple-command regression for any accepted Phase 5–9 increment. ARIA-owned recording has no benchmark because it is out of scope.
+
 ## 2026-09-22 Sprint 2 baseline
 
 Windows 11, Intel 10th-generation CPU, CPU `int8`, multilingual `base`, synthetic 1.644 s “Open Camera” WAV:
@@ -130,3 +132,24 @@ It uses a fixed development corpus and controlled executor adapters; no unattend
 real actions are performed. Runtime failures stop evaluation instead of polluting
 quality denominators. Raw generated reports are ignored by Git. No native runtime
 replacement or Windows security bypass is authorized. See sprint5.md.
+
+## Phase 5 screenshot/audio hardening — 2026-10-10
+
+`scripts/phase5_media_benchmark.py` runs guarded Engine actions with a disposable PNG destination. Audio uses an inert endpoint in both modes; no speaker setting is changed. Controlled mode mocks a 64×40 capture; `--native-screenshot` captures the real virtual desktop and deletes each verified PNG. Windows 11 build 26200, Intel Family 6 Model 165, 16 logical CPUs, Python 3.12.10. Results are in ignored `logs/phase5-media-controlled.json` and `logs/phase5-media-native-screenshot.json`.
+
+| Operation | Mode | Samples | p50 ms | p95 ms |
+| --- | --- | ---: | ---: | ---: |
+| Screenshot | Mocked capture | 30 | 14.51 | 22.37 |
+| Screenshot | Native 3840×2400 capture | 10 | 1144.96 | 1274.73 |
+| Set volume | Inert endpoint | 30 | 0.0183 | 0.0300 |
+| Change volume | Inert endpoint | 30 | 0.0184 | 0.0372 |
+| Mute | Inert endpoint | 30 | 0.0170 | 0.0300 |
+| Unmute | Inert endpoint | 30 | 0.0166 | 0.0181 |
+
+The native screenshot run ended with 70.72 MiB process RSS, 10.83 s process CPU over 11.64 s wall time, and one process. A separate 10-sample native repeat gave p50/p95 1081.72/1287.52 ms; an earlier run gave 431.49/464.82 ms, so capture/PNG timing varies materially with the screen and machine load. These are after-run samples, not peak or idle baselines. An opt-in native same-state speaker write/readback check passed and restored the original scalar/mute, but its latency was not benchmarked. Deliberate speaker changes, Windows 10, and physical multi-monitor results remain unmeasured. See [phase5-media.md](phase5-media.md) for the verification contract and gate status.
+
+## Phase 6 unchanged voice replay checkpoint — 2026-10-10
+
+`scripts/phase6_voice_baseline.py` replays explicitly supplied local audio files through the unchanged cached `LocalASR` and deterministic interpreter without opening a microphone or executing an action. The manifest and report in ignored `logs/phase6-synthetic-smoke-manifest.json` and `logs/phase6-voice-synthetic-smoke.json` use four Windows-generated WAVs from the earlier desktop benchmark. This is a synthetic smoke, not a representative human-voice baseline. Windows 11 build 26200, Python 3.12.10, Intel Family 6 Model 165, 16 logical CPUs.
+
+Four clips contained 20 reference word tokens. There were four word errors (WER 0.20), two correct complete action proposals, and two missed file-replay actions. The reference text parsed correctly for both misses; the observed boundary is ASR or the synthetic recording. Model load in one cold process took 945.14 ms. First ASR call took 1,713.68 ms; three subsequent calls took 1,243.41, 1,410.23, and 1,452.57 ms. Four samples do not support a stable p50/p95. RSS was 190.24 MiB after model load and 238.13 MiB after replay. Process CPU across load and replay was 24.28 s over 6.91 s wall time; child processes after replay: zero. These are snapshots, not peak or idle measurements. No live capture, false-activation denominator, human WER, partial transcript, or speech-to-verified-result timing was measured. The corpus and evidence gate are in [phase6-voice-baseline.md](phase6-voice-baseline.md).

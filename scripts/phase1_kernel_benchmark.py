@@ -13,6 +13,7 @@ import psutil
 
 from aria.core import Action, ActionType
 from aria.engine import Engine
+from aria.desktop import AudioState
 from aria.permissions import PermissionEngine
 from aria.permissions import ConfirmationRequired
 
@@ -30,6 +31,7 @@ def measure(iterations=1000):
         raise ValueError("At least 20 iterations are required")
     process = psutil.Process()
     volume = Mock()
+    volume.mute.return_value = AudioState(40, True, "inert-endpoint")
     engine = Engine(volume=volume, shutdown=Mock())
     action = Action(ActionType.MUTE)
     for _ in range(20):

@@ -28,8 +28,9 @@ These checks narrow the interval between recheck and execution but do not create
 | Browser navigation | Observed loaded page URL and non-error HTTP response; verified at navigation level |
 | File copy | Destination existence observed; content equivalence unverified |
 | Recycle Bin deletion | Source disappearance observed; placement in Recycle Bin unverified |
-| Screenshot | Output file existence observed; image content unverified |
+| Screenshot | Phase 1 observed existence only; Phase 5 now decodes PNG, checks dimensions and no-overwrite publication before returning `VERIFIED` (see [phase5-media.md](phase5-media.md)) |
 | Browser download | Saved file existence observed; downloaded content unverified |
+| Volume/mute | Phase 5 reads back level, mute, and default endpoint identity before returning `VERIFIED` (see [phase5-media.md](phase5-media.md)) |
 | Other current actions | Executor acknowledgment or adapter-specific data; unverified until a capability-specific check is added |
 
 Verification failure is surfaced as an error. Later capability phases may add stronger checks without changing the kernel contract.

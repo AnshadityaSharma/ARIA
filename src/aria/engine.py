@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aria.core import Action, ActionType as T, FileState, Rect, Result, Verification, WindowState, RISK
-from aria.desktop import Applications, Files, Volume, screenshot
+from aria.desktop import Applications, AudioState, Files, ScreenshotReceipt, Volume, _parent_identity, screenshot
 from aria.filesystem import (OperationReceipt, PathSnapshot,
                              same_content, same_metadata, same_snapshot, snapshot_differences)
 from aria.intent import Interpreter
@@ -201,7 +201,10 @@ class Engine:
             from datetime import datetime
             from aria.desktop import known_folder
             path = self.files.resolve_destination(action.target) if action.target else known_folder("pictures") / f"ARIA-{datetime.now():%Y%m%d-%H%M%S-%f}.png"
-            if path.exists():
+            if path.suffix.casefold() != ".png":
+                raise ValueError("Screenshot destination must end in .png")
+            _parent_identity(path.parent)
+            if os.path.lexists(path):
                 raise FileExistsError("Screenshot destination already exists")
             action = Action(action.kind, str(path))
         if action.kind in {T.DELETE_PATH, T.MOVE_PATH, T.RENAME_PATH, T.COPY_PATH}:
@@ -230,11 +233,6 @@ class Engine:
                     raise FileExistsError("Destination already exists")
             action = Action(action.kind, str(source), params).validate()
         return action
-
-    @staticmethod
-    def _path_identity(path):
-        stat = Path(path).stat()
-        return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
     def _file_binding(self, action: Action) -> FileBinding:
         kind = action.kind
@@ -294,7 +292,7 @@ class Engine:
             return self._file_binding(action)
         if k == T.TAKE_SCREENSHOT:
             destination = Path(action.target)
-            return (self._path_identity(destination.parent), str(destination), not destination.exists())
+            return (_parent_identity(destination.parent), str(destination), not os.path.lexists(destination))
         if k in {T.CLICK_BROWSER_ELEMENT, T.SUBMIT_BROWSER, T.DOWNLOAD_FILE}:
             browser = self._browser_adapter()
             if not hasattr(browser, "capture_target"):
@@ -343,13 +341,13 @@ class Engine:
             if decision != Decision.ALLOW:
                 raise PermissionDenied("Action denied")
             binding = None
-            if action.kind in FILESYSTEM_ACTIONS:
+            if action.kind in FILESYSTEM_ACTIONS or action.kind == T.TAKE_SCREENSHOT:
                 event("target_recheck_start")
                 try:
                     binding = TargetBinding(action, self._target_identity(action))
                     self._recheck_binding(binding, deep=False)
                 except (OSError, LookupError, ValueError, AttributeError) as exc:
-                    raise PermissionDenied("Filesystem target could not be rechecked; nothing was executed") from exc
+                    raise PermissionDenied("Output target could not be rechecked; nothing was executed") from exc
                 event("target_recheck_complete")
             return self.__dispatch(action, event, binding)
 
@@ -511,13 +509,25 @@ class Engine:
             return Result(True, f"Windows accepted the open request for {opened}",
                           {"path": str(opened)}, True, Verification.UNVERIFIED)
         if k == T.TAKE_SCREENSHOT:
-            path = screenshot(action.target)
-            verified = Path(path).is_file()
-            return Result(True, f"Saved screenshot to {path}" if verified else f"Screenshot output was not found: {path}",
-                          observed=verified, verification=Verification.UNVERIFIED if verified else Verification.FAILED)
-        if k == T.SET_VOLUME: level = self.volume.set(action.params["level"]); return Result(True, f"Volume set to {level}%")
-        if k == T.CHANGE_VOLUME: level = self.volume.change(action.params["delta"]); return Result(True, f"Volume set to {level}%")
-        if k in {T.MUTE, T.UNMUTE}: self.volume.mute(k == T.MUTE); return Result(True, "Muted" if k == T.MUTE else "Unmuted")
+            if binding is None or not isinstance(binding.identity, tuple):
+                raise PermissionDenied("Screenshot output is not bound")
+            receipt = screenshot(action.target, expected_parent_identity=binding.identity[0])
+            if (not isinstance(receipt, ScreenshotReceipt) or receipt.path != Path(action.target)
+                    or receipt.width <= 0 or receipt.height <= 0 or not receipt.path.is_file()):
+                raise OSError("Screenshot adapter returned no verified output")
+            return Result(True, f"Saved screenshot to {receipt.path}",
+                          {"path": str(receipt.path), "width": receipt.width, "height": receipt.height},
+                          True, Verification.VERIFIED)
+        if k in {T.SET_VOLUME, T.CHANGE_VOLUME, T.MUTE, T.UNMUTE}:
+            if k == T.SET_VOLUME: state = self.volume.set(action.params["level"])
+            elif k == T.CHANGE_VOLUME: state = self.volume.change(action.params["delta"])
+            else: state = self.volume.mute(k == T.MUTE)
+            if not isinstance(state, AudioState):
+                raise OSError("Audio adapter returned no observed endpoint state")
+            message = f"Volume is {state.level}% ({'muted' if state.muted else 'unmuted'})"
+            return Result(True, message,
+                          {"level": state.level, "muted": state.muted, "endpoint_id": state.endpoint_id},
+                          True, Verification.VERIFIED)
         operations = {T.COPY_PATH: self.files.copy, T.MOVE_PATH: self.files.move, T.RENAME_PATH: self.files.rename}
         if k in operations:
             receipt = operations[k](action.target, action.params["destination"])

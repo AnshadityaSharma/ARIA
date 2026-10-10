@@ -81,7 +81,10 @@ def controlled_engine(interpreter):
     windows.place.side_effect = lambda _handle, rect: setattr(windows.rect, "return_value", rect)
     browser = Mock()
     browser.execute.return_value = Result(True, "Controlled browser adapter")
-    return Engine(windows=windows, applications=Mock(), files=Mock(), volume=Mock(),
+    from aria.desktop import AudioState
+    volume = Mock()
+    volume.set.return_value = volume.change.return_value = volume.mute.return_value = AudioState(40, False, "inert-endpoint")
+    return Engine(windows=windows, applications=Mock(), files=Mock(), volume=volume,
                   shutdown=Mock(), browser_factory=lambda: browser, interpreter=interpreter)
 
 

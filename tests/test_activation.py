@@ -49,7 +49,10 @@ def test_activation_confirmation_lifecycle(answer):
 
 
 def test_persistent_model_reused_and_timelines_fresh():
-    engine = Engine(volume=Mock())
+    from aria.desktop import AudioState
+    volume = Mock()
+    volume.mute.return_value = AudioState(40, True, "fixture-endpoint")
+    engine = Engine(volume=volume)
     asr = ASR()
     complete = __import__("threading").Event()
     controller = ActivationController(engine, VoiceController(engine, Mic(), asr),

@@ -48,9 +48,10 @@ second command system. See sprint4.md for limitations.
 
 ## Sprint 5 intent interpretation
 
-Engine.interpret is shared by text and voice. Interpreter calls the original parser
-first and invokes an optional local model only on ParseError. Input safety checks
-prevent obvious ambiguous or compound commands from becoming generic app targets;
+Engine.interpret is shared by text and voice. The current `Interpreter.interpret`
+calls the deterministic parser only; its optional model object is historical
+experimental code and is not an active fallback. Input safety checks prevent
+obvious ambiguous or compound commands from becoming generic app targets;
 browser query/text payloads retain their existing literal semantics.
 
 The model receives a capability-derived action vocabulary, not an application list.
@@ -60,11 +61,23 @@ Engine permission gate precede dispatch. The model has no executors, risk contro
 conversation memory or state mutation authority. Existing tracked-window and
 browser state remain the only state systems.
 
-LocalIntentModel lazily owns a persistent CPU llama.cpp process through authenticated
-loopback HTTP, with no remote URL option, tool calls or runtime downloads. Request
-deadlines kill the process; shutdown cancels it before joining the desktop worker.
-No model is required for tests or the default deterministic configuration.
+The historical `LocalIntentModel` adapter was designed to own a CPU llama.cpp
+process through authenticated loopback HTTP. It is not started by the current
+interpreter path. No model is required for tests or default operation.
 
-Model load/start/complete/timeout events extend Timeline. Actual native inference
-is blocked by Windows Application Control on the development machine, so protocol,
-quality and resource acceptance remain pending. See sprint5.md and benchmarks.md.
+Historical model protocol tests and benchmark hooks do not establish real native
+inference. Windows Application Control blocked that experiment on the development
+machine; quality and resource acceptance remain pending. See sprint5.md and
+benchmarks.md.
+
+## Phase 5 hardening and planned Phase 6–9 boundaries
+
+The later product decision removes ARIA-owned screen recording from Phase 5. Screenshot and audio actions still enter the Engine. The Phase 5 implementation binds screenshot destination and parent identity before capture, writes to a private staging file, verifies PNG decode and virtual-desktop dimensions, publishes without overwrite, and cleans only its own failed staging. Volume/mute read back actual endpoint identity and state after writing. No recorder process, recording state, FFmpeg or ffprobe enters the product. Controlled checks and one-machine native screenshot/same-state audio evidence are documented in [phase5-media.md](phase5-media.md); Phase 5 is accepted with the native-environment limitations recorded there.
+
+Phase 6 first improves the current final-only voice pipeline using representative local real speech. `Microphone` currently uses 16 kHz mono float32/50 ms blocks and a fixed RMS endpoint; `LocalASR` transcribes after capture. A partial transcript is a versioned display event only, never an executable command. Finalization has one decision point, and partial revisions cannot produce duplicate actions. The controller/Engine remain authoritative even if the Phase 8 UI is absent.
+
+The current `ActivationController` has one worker and `Engine.execute` holds a single execution lock through launch and window wait. Parallel independent launches are therefore a design task, not present behavior. A later bounded coordinator may hold a small dependency graph of immutable typed actions. It has no OS adapter or policy authority: every ready node passes through the Engine kernel, and successors receive only verified bound outputs. Conflicting target operations serialize; cancellation and timeouts stop dependents and expose partial outcomes. Any concurrency change must isolate application/window correlation, pending confirmations and tracked state before allowing overlapping branches. Simple single-action commands keep the direct path.
+
+Physical pointer and keyboard commands are separate candidate capabilities. Browser DOM clicks are not desktop cursor clicks. The native action contract must bind observed foreground/window identity, pointer position or literal text/chord, deterministic risk and confirmation, target recheck, and truthful delivery versus effect verification. When an unknown UI control could have consequential effects and no safe policy can be established, abstain. The target-window always-on-top property similarly needs a distinct typed action and readback; ARIA's own overlay `-topmost` is unrelated.
+
+Phase 8 will select an original Shard treatment with a compact floating transcript panel after comparative design. UI events carry actual listening, partial/final transcript, executing and verified outcome state. The panel coalesces frequent display updates, bounds long text, respects DPI/multiple monitors and reduced motion, and never blocks the command worker. If useful partials are unavailable, it shows listening followed by the final transcript. Phase 9 browser recipes use the bounded coordinator only after its gate; the existing in-memory Playwright context does not imply persistence across restart or reuse of the user's unrelated browser profile.
