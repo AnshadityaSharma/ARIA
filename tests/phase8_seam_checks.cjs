@@ -1,0 +1,35 @@
+// Dependency-free logic checks. These do not render or measure the browser UI.
+const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert/strict');
+const html=fs.readFileSync(path.join(__dirname,'../scripts/phase8_seam_final.html'),'utf8');
+const script=id=>html.split('<script id="'+id+'">')[1].split('</script>')[0];
+let now=0,scheduled=[],nextHandle=0,frames=0;
+function classes(){let set=new Set();return {add:x=>set.add(x),remove:x=>set.delete(x),contains:x=>set.has(x),toggle(x,on){if(on===undefined)on=!set.has(x);on?set.add(x):set.delete(x);return on}}}
+function element(){return {checked:false,value:'',textContent:'',hidden:false,inert:false,classList:classes(),dataset:{},attrs:{},style:{setProperty(){}},handlers:{},setAttribute(k,v){this.attrs[k]=v},appendChild(){},addEventListener(k,fn){this.handlers[k]=fn},contains(n){return this===n},focus(){document.activeElement=this}}}
+const nodes=Object.fromEntries([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>[m[1],element()]));
+nodes.showCaption.checked=true;
+const document={activeElement:null,hidden:false,body:element(),getElementById(id){assert(id in nodes,'Missing HTML element: '+id);return nodes[id]},querySelectorAll(selector){assert.equal(selector,'[data-demo]');return []},createElement:element,addEventListener(){}};
+nodes.seam.contains=n=>[nodes.trigger,nodes.details,nodes.fullTranscript,nodes.confirm,nodes.cancel,nodes.dismiss,nodes.closeDetails].includes(n);
+nodes.details.contains=n=>[nodes.fullTranscript,nodes.confirm,nodes.cancel,nodes.dismiss,nodes.closeDetails].includes(n);
+const box={document,performance:{now:()=>now},matchMedia:()=>({matches:false}),queueMicrotask:fn=>fn(),setTimeout(fn,ms){const task={id:++nextHandle,at:now+ms,fn};scheduled.push(task);return task.id},clearTimeout(id){for(const task of scheduled)if(task.id===id)task.cancelled=true},requestAnimationFrame(){return ++frames},cancelAnimationFrame(){}};
+vm.createContext(box);const run=s=>vm.runInContext(s,box);run(script('seam-model'));run(script('seam-controller'));
+function advance(ms){const end=now+ms;let limit=1000;while(limit--){scheduled.sort((a,b)=>a.at-b.at);const task=scheduled.find(t=>!t.ran&&!t.cancelled&&t.at<=end);if(!task)break;task.ran=true;now=task.at;task.fn()}assert(limit>0,'Unexpected timer loop');now=end}
+let count=0;function test(name,fn){fn();count++;console.log('PASS '+name)}
+test('explicit matching outcome is required',()=>{run("let m=new SeamModel();m.activate('first')");assert.equal(run("m.apply({session:'first',seq:1,state:'verified'})"),false);assert.equal(run("m.apply({session:'first',seq:1,state:'verified',outcome:'failed'})"),false);assert.equal(run("m.apply({session:'first',seq:1,state:'verified',outcome:'verified'})"),true)});
+test('terminal event cannot be replayed',()=>assert.equal(run("m.apply({session:'first',seq:2,state:'verified',outcome:'verified'})"),false));
+test('new activation rejects old session updates',()=>{run("m.activate('second')");assert.equal(run("m.apply({session:'first',seq:1,state:'final',text:'Old',revision:0})"),false);assert.equal(run("m.activate('first')"),false)});
+test('partial revisions increase and sequence gaps reject',()=>{assert.equal(run("m.apply({session:'second',seq:1,state:'partial',text:'left',revision:1})"),true);assert.equal(run("m.apply({session:'second',seq:2,state:'partial',text:'stale',revision:1})"),false);assert.equal(run("m.apply({session:'second',seq:3,state:'partial',text:'gap',revision:2})"),false);assert.equal(run("m.apply({session:'second',seq:2,state:'partial',text:'right',revision:2})"),true)});
+test('missing final text clears partial',()=>{assert.equal(run("m.apply({session:'second',seq:3,state:'final'})"),true);assert.equal(run('m.text'),'')});
+test('transcript has a strict 10,000 character bound',()=>{run("m.activate('third')");assert.equal(run("m.apply({session:'third',seq:1,state:'final',text:'x'.repeat(10001),revision:0})"),false)});
+test('quick command does not display waiting or execution',()=>{run("demo('quick')");advance(700);assert.equal(run('model.state'),'verified');assert.equal(run('visibleState'),'verified');advance(200);assert.equal(run('visibleState'),'verified')});
+test('new command cancels old result and collapse callbacks',()=>{run("demo('quick')");advance(300);run("begin();publish('final',{text:'Replacement',revision:0})");advance(3000);assert.equal(run('visibleState'),'final');assert.equal(run('model.text'),'Replacement')});
+test('mismatch stays plain text and does not assert success',()=>{run("demo('mismatch')");advance(1200);assert.equal(run('model.text'),'Resize the camera to 40 percent');assert.equal(run('model.state'),'final');assert(nodes.message.textContent.includes('No action was executed'))});
+test('long text remains complete in disclosure',()=>{run("demo('long')");advance(1500);assert(nodes.fullTranscript.textContent.length>280);assert.equal(nodes.fullTranscript.textContent,run('model.text'))});
+test('slow states wait 180ms before display',()=>{run("inspect('processing')");assert.equal(run('visibleState'),'final');advance(179);assert.equal(run('visibleState'),'final');advance(2);assert.equal(run('visibleState'),'processing')});
+test('pause freezes scenario callbacks and resume preserves remaining time',()=>{run("demo('quick')");advance(300);nodes.pause.onclick();advance(5000);assert.equal(run('model.state'),'listening');nodes.pause.onclick();advance(351);assert.equal(run('model.state'),'verified')});
+test('confirmation times out without a verified result',()=>{run("inspect('confirmation')");assert.equal(nodes.decision.hidden,false);advance(15001);assert.equal(run('model.state'),'cancelled');assert.equal(nodes.decision.hidden,true);assert(nodes.message.textContent.includes('expired'))});
+test('dismissed error remains inspectable without asserting success',()=>{run("inspect('failed');dismiss()");assert.equal(run('visibleState'),'idle');assert.equal(nodes.detailState.textContent,'Action failed');assert.equal(run('model.outcome'),'failed')});
+test('keyboard/click disclosure removes inert and supports close',()=>{run('pinned=true;suppressed=false;disclosure()');assert.equal(nodes.details.inert,false);assert.equal(nodes.trigger.attrs['aria-expanded'],'true');run('closeDetails()');assert.equal(nodes.details.inert,true);assert.equal(nodes.trigger.attrs['aria-expanded'],'false')});
+test('idle has no recurring frame request',()=>{nodes.reset.onclick();run('Object.assign(pose,goal);Object.keys(speed).forEach(k=>speed[k]=0)');const before=frames;run('tick(performance.now()+16)');assert.equal(frames,before)});
+test('reduced motion holds a static pose during synthetic voice',()=>{nodes.reduce.checked=true;run("demo('voice');tick(performance.now()+16)");assert.equal(run('pose.travel'),0);assert.equal(run('pose.bend'),0)});
+test('no external assets or network/microphone APIs',()=>{assert(!/<(?:link|script|img)[^>]+(?:src|href)=/i.test(html));assert(!/\b(?:fetch|XMLHttpRequest|WebSocket|getUserMedia)\s*\(/.test(html))});
+console.log(count+' checks passed. Browser rendering and native resource budgets are not tested here.');

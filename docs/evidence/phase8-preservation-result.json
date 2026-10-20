@@ -1,0 +1,15 @@
+{
+  "original": {
+    "files_checked": 110,
+    "changed": [],
+    "missing": []
+  },
+  "isolated": {
+    "files_checked": 101,
+    "changed": [
+      "src/aria/shard_presentation.py"
+    ],
+    "missing": []
+  },
+  "preserved": true
+}

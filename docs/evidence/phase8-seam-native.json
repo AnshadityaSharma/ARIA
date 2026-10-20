@@ -1,0 +1,84 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "logical_cores": 16,
+  "physical_ram_bytes": 34092027904,
+  "work_area": {
+    "left": 0,
+    "top": 0,
+    "right": 3840,
+    "bottom": 2280,
+    "dpi": 240
+  },
+  "evidence": "Native Windows Tk + synthetic events only; short warm experiment, no live actions",
+  "startup_to_tk_update_ms": 51.89590000009048,
+  "rss_before_root_bytes": 29298688,
+  "root_only_idle_cpu_one_core_percent": 0.0,
+  "rss_before_screenshot_bytes": 42237952,
+  "rss_root_only_bytes": 34816000,
+  "rss_final_bytes": 80048128,
+  "stages": [
+    {
+      "stage": "visible_idle",
+      "wall_seconds": 5.006868499998745,
+      "cpu_one_core_percent": 0.6241426152895334,
+      "rss_bytes": 36945920,
+      "paints": 0
+    },
+    {
+      "stage": "hidden_idle",
+      "wall_seconds": 5.003908999999112,
+      "cpu_one_core_percent": 0.0,
+      "rss_bytes": 36954112,
+      "paints": 0
+    },
+    {
+      "stage": "synthetic_voice_active",
+      "wall_seconds": 5.004290700000638,
+      "cpu_one_core_percent": 21.856244282528603,
+      "rss_bytes": 41877504,
+      "paints": 222
+    }
+  ],
+  "event_to_adapter_update_ms": {
+    "n": 62,
+    "p50": 23.116299999855983,
+    "p95": 31.597199998941505,
+    "max": 35.85240000029444
+  },
+  "event_to_raster_and_tk_submit_ms": {
+    "n": 62,
+    "p50": 30.09340000062366,
+    "p95": 39.27099999964412,
+    "max": 57.15229999987059
+  },
+  "raster_and_tk_submit_ms": {
+    "n": 389,
+    "p50": 4.093999999895459,
+    "p95": 12.546399999337154,
+    "max": 51.270200001454214
+  },
+  "scheduled_animation_interval_ms": {
+    "n": 261,
+    "p50": 31.042900000102236,
+    "p95": 35.55369999958202,
+    "max": 80.55979999880947
+  },
+  "no_unrequested_foreground_change": true,
+  "screenshots": [
+    "docs\\evidence\\seam-native-compact.png",
+    "docs\\evidence\\seam-native-expanded.png"
+  ],
+  "renderer_fault": null,
+  "limitations": [
+    "No compositor/present timestamp",
+    "Root-only baseline is not a non-UI ARIA process control",
+    "Final RSS includes screenshot tooling; use before-screenshot and stage RSS",
+    "One display and one scaling setting",
+    "CPU counters are coarse at short durations",
+    "No native screen-reader or endurance acceptance",
+    "Foreground may change externally during experiment"
+  ],
+  "shutdown_ms": 27.902300000278046,
+  "pending_jobs_after_close": 0
+}

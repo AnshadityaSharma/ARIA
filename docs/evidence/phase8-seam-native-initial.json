@@ -1,0 +1,75 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "logical_cores": 16,
+  "physical_ram_bytes": 34092027904,
+  "work_area": {
+    "left": 0,
+    "top": 0,
+    "right": 3840,
+    "bottom": 2280,
+    "dpi": 240
+  },
+  "evidence": "Native Windows Tk + synthetic events only; short warm experiment, no live actions",
+  "startup_to_tk_update_ms": 83.56590000039432,
+  "rss_before_root_bytes": 29351936,
+  "rss_root_only_bytes": 34869248,
+  "rss_final_bytes": 77799424,
+  "stages": [
+    {
+      "stage": "visible_idle",
+      "wall_seconds": 3.0013435999999274,
+      "cpu_one_core_percent": 5.206001738688093,
+      "rss_bytes": 36786176,
+      "paints": 0
+    },
+    {
+      "stage": "hidden_idle",
+      "wall_seconds": 3.0019978000000265,
+      "cpu_one_core_percent": 3.12292034324606,
+      "rss_bytes": 36786176,
+      "paints": 0
+    },
+    {
+      "stage": "synthetic_voice_active",
+      "wall_seconds": 3.0084642000001622,
+      "cpu_one_core_percent": 71.15341442320917,
+      "rss_bytes": 37298176,
+      "paints": 104
+    }
+  ],
+  "event_to_adapter_update_ms": {
+    "n": 61,
+    "p50": 19.25270000083401,
+    "p95": 38.63030000047729,
+    "max": 43.59840000051918
+  },
+  "raster_and_tk_submit_ms": {
+    "n": 278,
+    "p50": 14.719199999944976,
+    "p95": 51.82280000008177,
+    "max": 78.74819999960891
+  },
+  "scheduled_animation_interval_ms": {
+    "n": 180,
+    "p50": 36.57364999980928,
+    "p95": 81.24299999963114,
+    "max": 95.65110000039567
+  },
+  "no_unrequested_foreground_change": true,
+  "screenshots": [
+    "docs\\evidence\\seam-native-compact.png",
+    "docs\\evidence\\seam-native-expanded.png"
+  ],
+  "renderer_fault": null,
+  "limitations": [
+    "No compositor/present timestamp",
+    "No non-UI process control baseline",
+    "One display and one scaling setting",
+    "CPU counters are coarse at short durations",
+    "No native screen-reader or endurance acceptance",
+    "Foreground may change externally during experiment"
+  ],
+  "shutdown_ms": 27.609900000243215,
+  "pending_jobs_after_close": 0
+}
